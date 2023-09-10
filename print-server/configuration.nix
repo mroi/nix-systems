@@ -4,7 +4,7 @@
 		"${modulesPath}/profiles/headless.nix"
 		../customization.nix
 	];
-	system.stateVersion = "23.05";
+	system.stateVersion = "23.11";
 
 	networking.hostName = "nixos-${builtins.baseNameOf ./.}";
 	networking.firewall.enable = false;
