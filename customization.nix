@@ -6,4 +6,6 @@
 	config.customization = {
 		authorizedKey = "ssh-ed25519 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 	};
+	config.console.keyMap = "de";
+	config.time.timeZone = "Europe/Berlin";
 }

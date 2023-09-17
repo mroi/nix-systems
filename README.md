@@ -7,6 +7,8 @@ creation of complete Linux-based systems. I am using it to run these installatio
 * a little WiFi [print server](print-server) to avoid using the printer’s native (and likely 
 of sketchy security) WiFi functionality
 
+* a [rescue](rescue) system on a bootable ISO that can be launched from a USB stick
+
 ___
 This work is licensed under the [WTFPL](http://www.wtfpl.net/), so you can do anything you 
 want with it.
