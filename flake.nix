@@ -13,5 +13,26 @@
 				import ./${subdir} { inherit nixpkgs system; }
 			)
 		);
+		apps = forAll systems (system:
+			forAll subdirs (subdir:
+				let
+					configuration = { modulesPath, ... }: {
+						imports = [
+							./${subdir}/configuration.nix
+							"${modulesPath}/virtualisation/qemu-vm.nix"
+						];
+						virtualisation.host.pkgs = nixpkgs.legacyPackages.${system};
+						virtualisation.qemu.guestAgent.enable = false;
+					};
+					nixos = nixpkgs.lib.nixosSystem {
+						modules = [ configuration ];
+						system = builtins.replaceStrings [ "darwin" ] [ "linux" ] system;
+					};
+				in {
+					type = "app";
+					program = "${nixos.config.system.build.vm}/bin/run-${nixos.config.networking.hostName}-vm";
+				}
+			)
+		);
 	};
 }
