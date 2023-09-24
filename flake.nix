@@ -23,6 +23,12 @@
 						];
 						virtualisation.host.pkgs = nixpkgs.legacyPackages.${system};
 						virtualisation.qemu.guestAgent.enable = false;
+						virtualisation.forwardPorts = [{
+							from = "host";
+							host.address = "127.0.0.1";
+							host.port = 22022;
+							guest.port = 22;
+						}];
 					};
 					nixos = nixpkgs.lib.nixosSystem {
 						modules = [ configuration ];
@@ -32,7 +38,14 @@
 					type = "app";
 					program = "${nixos.config.system.build.vm}/bin/run-${nixos.config.networking.hostName}-vm";
 				}
-			)
+			) // {
+				ssh = {
+					type = "app";
+					program = "${nixpkgs.legacyPackages.${system}.writeScriptBin "ssh-nixos" ''
+						ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i ~/.ssh/nixos -p 22022 root@localhost
+					''}/bin/ssh-nixos";
+				};
+			}
 		);
 	};
 }
