@@ -6,6 +6,9 @@
 	];
 	system.stateVersion = "23.11";
 
+	# FIXME: SSH crashes with the Rust nscd implementation
+	services.nscd.enableNsncd = false;
+
 	networking.hostName = "nixos-${builtins.baseNameOf ./.}";
 	networking.firewall.enable = false;
 	services.avahi.enable = true;
@@ -13,6 +16,7 @@
 		enable = true;
 		settings.PermitRootLogin = "yes";
 		settings.PasswordAuthentication = false;
+		settings.KbdInteractiveAuthentication = false;
 	};
 
 	users.users.root.openssh.authorizedKeys.keys = [
