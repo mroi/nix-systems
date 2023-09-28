@@ -2,6 +2,7 @@
 	imports = [
 		"${modulesPath}/profiles/all-hardware.nix"
 		"${modulesPath}/profiles/base.nix"
+#		./stress-test-tools.nix
 		../customization.nix
 	];
 	system.stateVersion = "23.11";
@@ -12,9 +13,9 @@
 		# convenience tools
 		file
 	];
+
 	environment.variables = {
 		TERM = "vt220";
 	};
-
 	services.getty.autologinUser = "root";
 }
