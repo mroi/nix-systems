@@ -11,6 +11,7 @@ let
 			makeEfiBootable = true;
 			makeUsbBootable = true;
 			prependToMenuLabel = "Rescue ";
+			appendToMenuLabel = "";
 		};
 	};
 
