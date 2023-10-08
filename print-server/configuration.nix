@@ -32,8 +32,12 @@
 	services.fstrim.enable = true;
 
 	# configure basic network services
-	networking.hostName = "nixos-${builtins.baseNameOf ./.}";
-	networking.firewall.enable = false;
+	networking = {
+		hostName = "nixos-${builtins.baseNameOf ./.}";
+		firewall.enable = false;
+		wireless.enable = true;
+		wireless.networks.${config.customization.wifi.ssid}.psk = config.customization.wifi.password;
+	};
 	services.avahi = {
 		enable = true;
 		publish.enable = true;
