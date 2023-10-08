@@ -9,6 +9,18 @@
 	# FIXME: SSH crashes with the Rust nscd implementation
 	services.nscd.enableNsncd = false;
 
+	# system upgrades and garbage collection
+	system.autoUpgrade = {
+		enable = true;
+		operation = "boot";
+		channel = config.system.defaultChannel;
+	};
+	nix = {
+		settings.max-jobs = 1;
+		gc.automatic = true;
+		gc.options = "--delete-older-than 100d";
+	};
+
 	# reduce writes to the SD card and enable trimming
 	fileSystems."/".options = [ "noatime" ];
 	fileSystems."/tmp" = {
