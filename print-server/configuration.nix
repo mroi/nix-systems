@@ -1,4 +1,4 @@
-{ config, modulesPath, ... }: {
+{ config, pkgs, modulesPath, ... }: {
 	imports = [
 		"${modulesPath}/profiles/minimal.nix"
 		"${modulesPath}/profiles/headless.nix"
@@ -19,9 +19,17 @@
 	services.journald.extraConfig = "Storage=volatile";
 	services.fstrim.enable = true;
 
+	# configure basic network services
 	networking.hostName = "nixos-${builtins.baseNameOf ./.}";
 	networking.firewall.enable = false;
-	services.avahi.enable = true;
+	services.avahi = {
+		enable = true;
+		publish.enable = true;
+		publish.userServices = true;
+		extraServiceFiles = {
+			ssh = "${pkgs.avahi}/etc/avahi/services/ssh.service";
+		};
+	};
 	services.openssh = {
 		enable = true;
 		settings.PermitRootLogin = "yes";
