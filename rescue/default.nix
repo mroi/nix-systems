@@ -1,4 +1,4 @@
-{ nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
+{ nixpkgs, system }:
 
 let
 	configuration = { modulesPath, ... }: {
