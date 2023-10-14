@@ -55,4 +55,15 @@
 	users.users.root.openssh.authorizedKeys.keys = [
 		config.customization.authorizedKey
 	];
+
+	# CUPS printing with HP driver
+	services.printing = {
+		enable = true;
+		browsing = true;
+		stateless = true;
+		defaultShared = true;
+		listenAddresses = [ "*:631" ];
+		allowFrom = [ "all" ];
+		drivers = [ pkgs.hplip ];
+	};
 }
