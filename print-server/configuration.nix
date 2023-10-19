@@ -5,6 +5,7 @@
 		../customization.nix
 	];
 	system.stateVersion = "23.11";
+	environment.noXlibs = false;  # set true by minimal.nix, but causes binary cache misses
 
 	# FIXME: SSH crashes with the Rust nscd implementation
 	services.nscd.enableNsncd = false;
