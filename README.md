@@ -11,6 +11,10 @@ of sketchy security) WiFi functionality
 
 * a Samba server for [Time Machine](time-machine) backups
 
+* [VMware-host](vmware-host) runs [VMware 
+Workstation](https://www.vmware.com/de/products/workstation-pro.html) to execute virtual 
+machines and serves their display using [Sunshine](https://app.lizardbyte.dev/Sunshine/).
+
 ___
 This work is licensed under the [WTFPL](http://www.wtfpl.net/), so you can do anything you 
 want with it.
