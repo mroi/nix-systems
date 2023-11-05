@@ -2,7 +2,6 @@
 	imports = [
 		"${modulesPath}/profiles/all-hardware.nix"
 		"${modulesPath}/profiles/base.nix"
-#		./stress-test-tools.nix
 		../customization.nix
 	];
 	system.stateVersion = "23.11";

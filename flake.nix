@@ -4,6 +4,7 @@
 	outputs = { self, nixpkgs }: let
 		systems = [ "x86_64-linux"  "x86_64-darwin" ];
 		subdirs = [ "print-server" "rescue" ];
+		modules = [ "stress-test-tools" ];
 		forAll = list: f: nixpkgs.lib.genAttrs list f;
 
 	in {
@@ -45,6 +46,12 @@
 					''}/bin/ssh-nixos";
 				};
 			}
+		);
+		nixosModules = forAll modules (module:
+			import modules/${module}.nix
+		);
+		nixosConfigurations = forAll subdirs (subdir:
+			import ./${subdir}/configuration.nix
 		);
 	};
 }
