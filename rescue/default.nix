@@ -4,7 +4,6 @@ let
 	configuration = { modulesPath, ... }: {
 		imports = [
 			./configuration.nix
-			"${modulesPath}/installer/cd-dvd/iso-image.nix"
 		];
 		isoImage = {
 			isoBaseName = builtins.baseNameOf ./.;

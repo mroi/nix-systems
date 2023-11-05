@@ -4,7 +4,7 @@
 	outputs = { self, nixpkgs }: let
 		systems = [ "x86_64-linux"  "x86_64-darwin" ];
 		subdirs = [ "print-server" "rescue" ];
-		modules = [ "stress-test-tools" ];
+		modules = [ "auto-upgrade" "config-install" "ssh-wifi-access" "stress-test-tools" ];
 		forAll = list: f: nixpkgs.lib.genAttrs list f;
 
 	in {

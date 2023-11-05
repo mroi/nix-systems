@@ -1,5 +1,6 @@
 { pkgs, modulesPath, ... }: {
 	imports = [
+		"${modulesPath}/installer/cd-dvd/iso-image.nix"
 		"${modulesPath}/profiles/all-hardware.nix"
 		"${modulesPath}/profiles/base.nix"
 		../customization.nix
