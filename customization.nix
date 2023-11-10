@@ -18,6 +18,42 @@
 		wifi.password = "";
 	};
 
-	config.console.keyMap = "de";
-	config.time.timeZone = "Europe/Berlin";
+	config = {
+		# basic system settings
+		console.keyMap = "de";
+		time.timeZone = "Europe/Berlin";
+
+		# command line environment
+		nix.settings.extra-experimental-features = [ "flakes" "nix-command" ];
+		programs.bash.promptInit = ''
+			if test "$SSH_CLIENT" || test "$SSH2_CLIENT" ; then
+				SHELL_PROMPTCOLOR=''${SHELL_PROMPTCOLOR:-2}
+			fi
+			if test "''${TERM#screen}" != "$TERM" ; then
+				SHELL_PROMPTCOLOR=5
+			fi
+			if test "$SHLVL" -gt 1 ; then
+				SHELL_PROMPTCOLOR=3
+			fi
+			if test "$USER" = root ; then
+				SHELL_PROMPTCOLOR=1
+			fi
+			export SHELL_PROMPTCOLOR=''${SHELL_PROMPTCOLOR:-6}
+			export PS1='\n\[\033[1m\033[3'$SHELL_PROMPTCOLOR'm\]\u@\h:\w > \[\033[m\]'
+			export PS2='\[\033[1m\033[3'$SHELL_PROMPTCOLOR'm\]> \[\033[m\]'
+			export PS4='\[\033[1m\033[3'$SHELL_PROMPTCOLOR'm\]+ \[\033[m\]'
+		'';
+		programs.less.envVariables = {
+			LESS = "-M -I -S -R";
+			LESSHISTFILE = "-";
+		};
+		environment.shellAliases = {
+			la = "ls -al";
+			pico = "nano -wL";
+		};
+		environment.variables = {
+			HISTFILE = "";
+			LC_COLLATE = "POSIX";
+		};
+	};
 }
