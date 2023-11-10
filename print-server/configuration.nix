@@ -24,7 +24,7 @@
 	services.fstrim.enable = true;
 
 	# CUPS printing with HP driver
-	networking.hostName = "nixos-${builtins.baseNameOf ./.}";
+	networking.hostName = builtins.baseNameOf ./.;
 	services.printing = {
 		enable = true;
 		browsing = true;
