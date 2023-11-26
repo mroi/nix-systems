@@ -32,6 +32,29 @@
 		device = "/dev/nvme0n1";
 		fsType = "ext4";
 	};
+	systemd.services.vm-user-directories = {
+		description = "Create per-user directories for virtual machines.";
+		wantedBy = [ "multi-user.target" ];
+		wants = [ "local-fs.target" ];
+		after = [ "local-fs.target" ];
+		serviceConfig.Type = "oneshot";
+		script = let
+			normalUsers = lib.concatStringsSep " " (
+				builtins.attrNames (
+					lib.filterAttrs
+						(name: value: value.isNormalUser)
+						config.users.users
+				)
+			);
+		in ''
+			for user in ${normalUsers} ; do
+				if ! test -d /mnt/vm/$user ; then
+					mkdir -m 700 /mnt/vm/$user
+					chown $user:users /mnt/vm/$user
+				fi
+			done
+		'';
+	};
 	services.fstrim.enable = true;
 
 	# WiFi firmware
