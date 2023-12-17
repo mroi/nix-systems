@@ -96,6 +96,7 @@
 		};
 		michael = {
 			isNormalUser = true;
+			linger = true;
 			extraGroups = [ "wheel" "sunshine" ];
 			openssh.authorizedKeys.keys = [
 				config.customization.authorizedKey
@@ -103,6 +104,7 @@
 		};
 		paula = {
 			isNormalUser = true;
+			linger = true;
 			extraGroups = [ "sunshine" ];
 		};
 	};
@@ -154,4 +156,35 @@
 			exec ${pkgs.sunshine}/bin/sunshine capture=wlr encoder=vaapi adapter_name=$WLR_RENDER_DRM_DEVICE
 		'';
 	};
+
+	# scripts to launch user apps on system-wide sunshine desktop
+	environment.systemPackages = [
+		(pkgs.writeShellScriptBin "sunshine-prepare" ''
+			# defaults for unset variables
+			SUNSHINE_CLIENT_WIDTH="''${SUNSHINE_CLIENT_WIDTH:-2560}"
+			SUNSHINE_CLIENT_HEIGHT="''${SUNSHINE_CLIENT_HEIGHT:-1440}"
+			RESOLUTION="''${SUNSHINE_CLIENT_WIDTH}x''${SUNSHINE_CLIENT_HEIGHT}"
+			if test -z "$DISPLAY_SCALE" ; then
+				if test "$SUNSHINE_CLIENT_HEIGHT" -gt 1700 ; then
+					DISPLAY_SCALE=2
+				else
+					DISPLAY_SCALE=1
+				fi
+			fi
+			# set desired resolution
+			export XDG_RUNTIME_DIR="/run/user/$(id -u sunshine)"
+			export WAYLAND_DISPLAY=wayland-0
+			${pkgs.wlr-randr}/bin/wlr-randr --output Virtual-1 --mode "$RESOLUTION" --scale "$DISPLAY_SCALE"
+		'')
+		(pkgs.writeShellScriptBin "sunshine-launch" ''
+			# forward system-wide wayland socket
+			export XDG_RUNTIME_DIR="/run/user/$UID"
+			export WAYLAND_DISPLAY=wayland-0
+			while ! test -d "$XDG_RUNTIME_DIR" ; do sleep 1 ; done
+			SUNSHINE_DIR="/run/user/$(id -u sunshine)"
+			ln -sf "$SUNSHINE_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/"
+			# start actual application
+			exec "$@"
+		'')
+	];
 }
