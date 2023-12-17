@@ -80,15 +80,85 @@
 	};
 	security.sudo.wheelNeedsPassword = false;
 	users.users = {
+		sunshine = {
+			isSystemUser = true;
+			linger = true;
+			group = "sunshine";
+			extraGroups = [ "video" "input" "seat" ];
+			home = "/var/lib/sunshine";
+			createHome = true;
+		};
 		michael = {
 			isNormalUser = true;
-			extraGroups = [ "wheel" ];
+			extraGroups = [ "wheel" "sunshine" ];
 			openssh.authorizedKeys.keys = [
 				config.customization.authorizedKey
 			];
 		};
 		paula = {
 			isNormalUser = true;
+			extraGroups = [ "sunshine" ];
 		};
+	};
+	users.groups.sunshine = {};
+
+	# system-wide sunshine desktop streaming from a wayland display server
+	services = {
+		udev.extraRules = ''
+			# sunshine forwards remote input, so uinput must be accessible by group
+			KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
+		'';
+		seatd.enable = true;  # needed to allow AMDGPU access without a logged-in user
+	};
+	networking.firewall = {
+		allowedTCPPorts = [ 47984 47989 47990 48010 ];
+		allowedUDPPorts = [ 47998 47999 48000 48002 ];
+	};
+	systemd.services.sunshine = {
+		description = "Sunshine desktop streaming from a wayland display server.";
+		wantedBy = [ "multi-user.target" ];
+		wants = [ "network-online.target" "vm-user-directories.service" ];
+		after = [ "network-online.target" "vm-user-directories.service" ];
+		serviceConfig = {
+			User = "sunshine";
+			Group = "sunshine";
+			Restart = "always";
+		};
+		script = ''
+			# prepare configuration files
+			mkdir --parents --mode=700 "$HOME/.config/sunshine"
+			if ! test -f "$HOME/.config/sunshine/apps.json" ; then
+				cat <<- 'EOF' > "$HOME/.config/sunshine/apps.json"
+					{
+					  "env": {
+					    "PATH": "$(PATH)"
+					  },
+					  "apps": [
+					    {
+					      "name": "Desktop",
+					      "image-path": "desktop.png"
+					    }
+					  ]
+					}
+				EOF
+			fi
+			# prepare runtime dir so other users can access wayland socket
+			export XDG_RUNTIME_DIR="/run/user/$UID"
+			chmod 750 "$XDG_RUNTIME_DIR"
+			# start wayland compositor using AMD GPU
+			export WLR_DRM_DEVICES=$(readlink -f '/dev/dri/by-path/pci-0000:0c:00.0-card')
+			export WLR_RENDER_DRM_DEVICE=$(readlink -f '/dev/dri/by-path/pci-0000:0c:00.0-render')
+			# FIXME: https://github.com/NixOS/nixpkgs/issues/229108
+			#export WLR_RENDERER=vulkan
+			export DRI_PRIME=pci-0000_0c_00_0!
+			${pkgs.labwc}/bin/labwc &
+			export WAYLAND_DISPLAY=wayland-0
+			while ! test -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ; do sleep 1 ; done
+			chmod 666 "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"
+			# desktop background color
+			${pkgs.swaybg}/bin/swaybg --color '#3d454c' &
+			# start sunshine server
+			exec ${pkgs.sunshine}/bin/sunshine capture=wlr encoder=vaapi adapter_name=$WLR_RENDER_DRM_DEVICE
+		'';
 	};
 }
