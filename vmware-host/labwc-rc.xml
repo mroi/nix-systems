@@ -1,0 +1,15 @@
+<!-- configuration for the labwc wayland compositor -->
+<labwc_config>
+  <mouse>
+    <default />
+    <!-- disable the root menu which would allow users to terminate the compositor -->
+    <context name="Root">
+      <mousebind button="Left" action="Press">
+      </mousebind>
+      <mousebind button="Right" action="Press">
+      </mousebind>
+      <mousebind button="Middle" action="Press">
+      </mousebind>
+    </context>
+  </mouse>
+</labwc_config>
