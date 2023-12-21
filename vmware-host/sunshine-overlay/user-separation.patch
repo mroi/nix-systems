@@ -1,0 +1,197 @@
+--- a/third-party/Simple-Web-Server/server_http.hpp	2023-12-20 15:52:18.686965875 +0100
++++ b/third-party/Simple-Web-Server/server_http.hpp	2023-12-20 16:57:23.674650462 +0100
+@@ -240,6 +240,9 @@
+ 
+       CaseInsensitiveMultimap header;
+ 
++      /// Allow attaching the requesting username.
++      std::string username;
++
+       /// The result of the resource regular expression match of the request path.
+       regex::smatch path_match;
+ 
+--- a/src/nvhttp.cpp	2023-12-20 12:06:52.811656891 +0100
++++ b/src/nvhttp.cpp	2023-12-20 17:01:20.376530140 +0100
+@@ -42,6 +42,14 @@
+   namespace fs = std::filesystem;
+   namespace pt = boost::property_tree;
+ 
++  struct client_t {
++    std::string uniqueID;
++    std::string username;
++    std::vector<std::string> certs;
++  };
++
++  std::unordered_multimap<std::string, client_t> map_id_client;
++
+   class SunshineHttpsServer: public SimpleWeb::Server<SimpleWeb::HTTPS> {
+   public:
+     SunshineHttpsServer(const std::string &certification_file, const std::string &private_key_file):
+@@ -93,8 +101,20 @@
+             if (!ec) {
+               if (verify && !verify(session->connection->socket->native_handle()))
+                 this->write(session, on_verify_failed);
+-              else
++              else {
++                // determine user name from client cert and attach to request
++                SSL *ssl = session->connection->socket->native_handle();
++                crypto::x509_t ssl_cert { SSL_get_peer_certificate(ssl) };
++                for (auto &[_, client] : map_id_client) {
++                  for (auto &cert : client.certs) {
++                    if (X509_cmp(crypto::x509(cert).get(), ssl_cert.get()) == 0) {
++                      session->request->username = client.username;
++                    }
++                  }
++                }
++                assert(!session->request->username.empty());
+                 this->read(session);
++              }
+             }
+             else if (this->on_error)
+               this->on_error(session->request, ec);
+@@ -114,11 +134,6 @@
+     std::string pkey;
+   } conf_intern;
+ 
+-  struct client_t {
+-    std::string uniqueID;
+-    std::vector<std::string> certs;
+-  };
+-
+   struct pair_session_t {
+     struct {
+       std::string uniqueID;
+@@ -142,7 +157,6 @@
+ 
+   // uniqueID, session
+   std::unordered_map<std::string, pair_session_t> map_id_sess;
+-  std::unordered_map<std::string, client_t> map_id_client;
+   std::atomic<uint32_t> session_id_counter;
+ 
+   using args_t = SimpleWeb::CaseInsensitiveMultimap;
+@@ -191,6 +205,7 @@
+       pt::ptree node;
+ 
+       node.put("uniqueid"s, client.uniqueID);
++      node.put("username"s, client.username);
+ 
+       pt::ptree cert_nodes;
+       for (auto &cert : client.certs) {
+@@ -242,9 +257,10 @@
+ 
+     for (auto &[_, device_node] : device_nodes) {
+       auto uniqID = device_node.get<std::string>("uniqueid");
+-      auto &client = map_id_client.emplace(uniqID, client_t {}).first->second;
++      auto &client = map_id_client.emplace(uniqID, client_t {})->second;
+ 
+       client.uniqueID = uniqID;
++      client.username = device_node.get<std::string>("username");
+ 
+       for (auto &[_, el] : device_node.get_child("certs")) {
+         client.certs.emplace_back(el.get_value<std::string>());
+@@ -256,7 +272,7 @@
+   update_id_client(const std::string &uniqueID, std::string &&cert, op_e op) {
+     switch (op) {
+       case op_e::ADD: {
+-        auto &client = map_id_client[uniqueID];
++        auto &client = (map_id_client.find(uniqueID) != map_id_client.end()) ? map_id_client.find(uniqueID)->second : map_id_client.emplace(uniqueID, client_t {})->second;
+         client.certs.emplace_back(std::move(cert));
+         client.uniqueID = uniqueID;
+       } break;
+@@ -760,6 +776,9 @@
+     for (auto &proc : proc::proc.get_apps()) {
+       pt::ptree app;
+ 
++      // filter apps by username
++      if (!proc.user_filter.empty() && proc.user_filter != request->username) continue;
++
+       app.put("IsHdrSupported"s, video::active_hevc_mode == 3 ? 1 : 0);
+       app.put("AppTitle"s, proc.name);
+       app.put("ID", proc.id);
+@@ -842,7 +861,7 @@
+     }
+ 
+     if (appid > 0) {
+-      auto err = proc::proc.execute(appid, launch_session);
++      auto err = proc::proc.execute(request->username, appid, launch_session);
+       if (err) {
+         tree.put("root.<xmlattr>.status_code", err);
+         tree.put("root.<xmlattr>.status_message", "Failed to start the specified application");
+@@ -892,6 +911,20 @@
+ 
+       return;
+     }
++
++    // check if the running app was launched by the requesting user, otherwise deny resume
++    auto &apps = proc::proc.get_apps();
++    auto iter = std::find_if(apps.begin(), apps.end(), [request, current_appid](const auto app) {
++      return app.id == std::to_string(current_appid) &&
++        (app.user_filter.empty() || app.user_filter == request->username);
++    });
++    if (iter == apps.end()) {
++      tree.put("root.resume", 0);
++      tree.put("root.<xmlattr>.status_code", 503);
++      tree.put("root.<xmlattr>.status_message", "The current app was launched by another user");
++
++      return;
++    }
+ 
+     auto args = request->parse_query_string();
+     if (
+--- a/src/process.h	2023-12-20 13:57:29.001612584 +0100
++++ b/src/process.h	2023-12-20 16:20:14.352661570 +0100
+@@ -56,6 +56,7 @@
+     std::string working_dir;
+     std::string output;
+     std::string image_path;
++    std::string user_filter;
+     std::string id;
+     bool elevated;
+     bool auto_detach;
+@@ -75,7 +76,7 @@
+         _apps(std::move(apps)) {}
+ 
+     int
+-    execute(int app_id, std::shared_ptr<rtsp_stream::launch_session_t> launch_session);
++    execute(const std::string &username, int app_id, std::shared_ptr<rtsp_stream::launch_session_t> launch_session);
+ 
+     /**
+      * @return _app_id if a process is running, otherwise returns 0
+--- a/src/process.cpp	1970-01-01 01:00:01.000000000 +0100
++++ b/src/process.cpp	2024-03-24 12:15:00.791853834 +0100
+@@ -145,7 +145,7 @@
+   }
+ 
+   int
+-  proc_t::execute(int app_id, std::shared_ptr<rtsp_stream::launch_session_t> launch_session) {
++  proc_t::execute(const std::string &username, int app_id, std::shared_ptr<rtsp_stream::launch_session_t> launch_session) {
+     // Ensure starting from a clean slate
+     terminate();
+ 
+@@ -173,6 +173,7 @@
+     _env["SUNSHINE_CLIENT_GCMAP"] = std::to_string(launch_session->gcmap);
+     _env["SUNSHINE_CLIENT_HOST_AUDIO"] = launch_session->host_audio ? "true" : "false";
+     _env["SUNSHINE_CLIENT_ENABLE_SOPS"] = launch_session->enable_sops ? "true" : "false";
++    _env["SUNSHINE_USER"] = username;
+     int channelCount = launch_session->surround_info & (65535);
+     switch (channelCount) {
+       case 2:
+@@ -609,6 +610,7 @@
+         auto cmd = app_node.get_optional<std::string>("cmd"s);
+         auto image_path = app_node.get_optional<std::string>("image-path"s);
+         auto working_dir = app_node.get_optional<std::string>("working-dir"s);
++        auto user_filter = app_node.get_optional<std::string>("user-filter"s);
+         auto elevated = app_node.get_optional<bool>("elevated"s);
+         auto auto_detach = app_node.get_optional<bool>("auto-detach"s);
+         auto wait_all = app_node.get_optional<bool>("wait-all"s);
+@@ -670,6 +672,10 @@
+           ctx.image_path = parse_env_val(this_env, *image_path);
+         }
+ 
++        if (user_filter) {
++          ctx.user_filter = *user_filter;
++        }
++
+         ctx.elevated = elevated.value_or(false);
+         ctx.auto_detach = auto_detach.value_or(true);
+         ctx.wait_all = wait_all.value_or(true);
