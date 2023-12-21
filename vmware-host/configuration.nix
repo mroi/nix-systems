@@ -177,6 +177,11 @@
 			${pkgs.wlr-randr}/bin/wlr-randr --output Virtual-1 --mode "$RESOLUTION" --scale "$DISPLAY_SCALE"
 		'')
 		(pkgs.writeShellScriptBin "sunshine-launch" ''
+			# switch user if necessary
+			SUNSHINE_USER="''${SUNSHINE_USER:-$USER}"
+			if test "$SUNSHINE_USER" != "$(id -nu)" ; then
+				exec sudo -u "$SUNSHINE_USER" "$0" "$@"
+			fi
 			# forward system-wide wayland socket
 			export XDG_RUNTIME_DIR="/run/user/$UID"
 			export WAYLAND_DISPLAY=wayland-0
@@ -187,4 +192,12 @@
 			exec "$@"
 		'')
 	];
+	security.sudo.extraRules = [{
+		users = [ "sunshine" ];
+		runAs = "%sunshine";
+		commands = [{
+			command = "/run/current-system/sw/bin/sunshine-launch";
+			options = [ "NOPASSWD" ];
+		}];
+	}];
 }
