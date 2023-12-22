@@ -1,4 +1,4 @@
-{ config, pkgs, modulesPath, ... }: {
+{ config, lib, pkgs, modulesPath, ... }: {
 	imports = [
 		"${modulesPath}/profiles/headless.nix"
 		../modules/auto-upgrade.nix
@@ -57,11 +57,17 @@
 	};
 	services.fstrim.enable = true;
 
-	# WiFi firmware
+	# AMD GPU for wayland, WiFi firmware
 	nixpkgs.config.allowUnfree = true;
+	boot = {
+		kernelParams = lib.mkForce [ "panic=1" "boot.panic_on_fail" ];
+		extraModprobeConfig = "options amdgpu virtual_display=0000:0c:00.0,1";
+		blacklistedKernelModules = [ "nouveau" ];
+	};
 	hardware = {
 		firmware = [ pkgs.linux-firmware ];
 		wirelessRegulatoryDatabase = true;
+		graphics.enable = true;
 	};
 
 	# hostname, IP address, user accounts
