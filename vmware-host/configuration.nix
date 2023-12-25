@@ -248,4 +248,15 @@
 			options = [ "NOPASSWD" ];
 		}];
 	}];
+
+	# vmware workstation and vm sync
+	virtualisation.vmware.host = {
+		enable = true;
+		extraConfig = ''
+			# pin vm memory to host RAM
+			prefvmx.minVmMemPct = "100"
+		'';
+	};
+	security.polkit.enable = true;
+	environment.defaultPackages = [ pkgs.rsync pkgs.unison ];
 }
