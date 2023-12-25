@@ -51,6 +51,11 @@
 				if ! test -d /mnt/vm/$user ; then
 					mkdir -m 700 /mnt/vm/$user
 					chown $user:users /mnt/vm/$user
+					if test $user = michael ; then
+						# support synching and backup of the sunshine state file
+						ln -s /var/lib/sunshine/sunshine.json /mnt/vm/$user/sunshine.json
+						chown --no-dereference $user:users /mnt/vm/$user/sunshine.json
+					fi
 				fi
 			done
 		'';
@@ -86,6 +91,7 @@
 			group = "sunshine";
 			extraGroups = [ "video" "input" "seat" ];
 			home = "/var/lib/sunshine";
+			homeMode = "750";
 			createHome = true;
 		};
 		michael = {
@@ -142,6 +148,7 @@
 					}
 				EOF
 			fi
+			ln -snf ../../sunshine.json "$HOME/.config/sunshine/sunshine_state.json"
 			# prepare runtime dir so other users can access wayland socket
 			export XDG_RUNTIME_DIR="/run/user/$UID"
 			chmod 750 "$XDG_RUNTIME_DIR"
