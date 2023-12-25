@@ -133,21 +133,7 @@
 		script = ''
 			# prepare configuration files
 			mkdir --parents --mode=700 "$HOME/.config/sunshine"
-			if ! test -f "$HOME/.config/sunshine/apps.json" ; then
-				cat <<- 'EOF' > "$HOME/.config/sunshine/apps.json"
-					{
-					  "env": {
-					    "PATH": "$(PATH)"
-					  },
-					  "apps": [
-					    {
-					      "name": "Desktop",
-					      "image-path": "desktop.png"
-					    }
-					  ]
-					}
-				EOF
-			fi
+			ln -snf ${import ./sunshine-apps { inherit config pkgs; }} "$HOME/.config/sunshine/apps.json"
 			ln -snf ../../sunshine.json "$HOME/.config/sunshine/sunshine_state.json"
 			# prepare runtime dir so other users can access wayland socket
 			export XDG_RUNTIME_DIR="/run/user/$UID"
