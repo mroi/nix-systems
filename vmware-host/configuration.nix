@@ -153,7 +153,7 @@
 			mkdir --parents --mode=700 "$HOME/.config/labwc"
 			ln -snf ${./labwc-rc.xml} "$HOME/.config/labwc/rc.xml"
 			mkdir --parents --mode=700 "$HOME/.config/sunshine"
-			ln -snf ${import ./sunshine-apps { inherit config pkgs; }} "$HOME/.config/sunshine/apps.json"
+			ln -snf ${import ./sunshine-apps { inherit config lib pkgs; }} "$HOME/.config/sunshine/apps.json"
 			ln -snf ../../sunshine.json "$HOME/.config/sunshine/sunshine_state.json"
 			# prepare runtime dir so other users can access wayland/pipewire sockets
 			export XDG_RUNTIME_DIR="/run/user/$UID"
