@@ -21,6 +21,27 @@ pkgs.writeText "apps.json" (builtins.toJSON {
 				'';
 			}] ++ app.prep-cmd or [];
 		});
+		vmware = pkgs.writeShellScript "vmware" ''
+			exec sunshine-launch ${pkgs.writeShellScript "vmware" ''
+				# inject default configuration options
+				if ! test -d "$HOME/.vmware" ; then
+					mkdir "$HOME/.vmware"
+					cat <<- EOF > "$HOME/.vmware/preferences"
+						prefvmx.defaultVMPath = "/mnt/vm/$USER"
+						pref.trayicon.enabled = "never"
+					EOF
+				fi
+				# clean up window state
+				sed --in-place '/^pref\.ws\.session/d' "$HOME/.vmware/preferences"
+				sed --in-place '/^pref\.library\.searchMRU/d' "$HOME/.vmware/preferences"
+				# symlink license file for sync and backup
+				if test "$USER" = michael && test -r /etc/vmware/license-* ; then
+					ln -snf /etc/vmware/license-* "/mnt/vm/$USER/"
+				fi
+				# launch VMware
+				exec vmware
+			''}
+		'';
 		unigine = [
 			{
 				name = "Heaven";
@@ -44,5 +65,11 @@ pkgs.writeText "apps.json" (builtins.toJSON {
 				'';
 			}
 		];
-	in (appsForUser "michael" unigine) ++ (appsForUser "paula" unigine);
+	in (appsForUser "michael" [
+		{
+			name = "VMware";
+			image-path = ./vmware.png;
+			cmd = vmware;
+		}
+	]) ++ (appsForUser "michael" unigine) ++ (appsForUser "paula" unigine);
 })
