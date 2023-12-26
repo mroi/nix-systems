@@ -142,6 +142,9 @@
 			# prepare runtime dir so other users can access wayland socket
 			export XDG_RUNTIME_DIR="/run/user/$UID"
 			chmod 750 "$XDG_RUNTIME_DIR"
+			# configure keyboard layout
+			export XKB_DEFAULT_LAYOUT=${config.console.keyMap}
+			export XKB_DEFAULT_VARIANT=mac
 			# start wayland compositor using AMD GPU
 			export WLR_DRM_DEVICES=$(readlink -f '/dev/dri/by-path/pci-0000:0c:00.0-card')
 			export WLR_RENDER_DRM_DEVICE=$(readlink -f '/dev/dri/by-path/pci-0000:0c:00.0-render')
