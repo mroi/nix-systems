@@ -123,11 +123,16 @@
 			KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
 		'';
 		seatd.enable = true;  # needed to allow AMDGPU access without a logged-in user
+		pipewire = {
+			enable = true;
+			pulse.enable = true;
+		};
 	};
 	networking.firewall = {
 		allowedTCPPorts = [ 47984 47989 47990 48010 ];
 		allowedUDPPorts = [ 47998 47999 48000 48002 ];
 	};
+	nixpkgs.overlays = [ (import ./sunshine-overlay) ];
 	systemd.services.sunshine = {
 		description = "Sunshine desktop streaming from a wayland display server.";
 		wantedBy = [ "multi-user.target" ];
@@ -145,9 +150,12 @@
 			mkdir --parents --mode=700 "$HOME/.config/sunshine"
 			ln -snf ${import ./sunshine-apps { inherit config pkgs; }} "$HOME/.config/sunshine/apps.json"
 			ln -snf ../../sunshine.json "$HOME/.config/sunshine/sunshine_state.json"
-			# prepare runtime dir so other users can access wayland socket
+			# prepare runtime dir so other users can access wayland/pipewire sockets
 			export XDG_RUNTIME_DIR="/run/user/$UID"
+			while ! test -S "$XDG_RUNTIME_DIR/bus" ; do sleep 1 ; done
+			${pkgs.systemd}/bin/systemctl start --user pipewire-pulse.service
 			chmod 750 "$XDG_RUNTIME_DIR"
+			chmod 750 "$XDG_RUNTIME_DIR/pulse"
 			# configure keyboard layout
 			export XKB_DEFAULT_LAYOUT=${config.console.keyMap}
 			export XKB_DEFAULT_VARIANT=mac
@@ -202,11 +210,15 @@
 			if test "$SUNSHINE_USER" != "$(id -nu)" ; then
 				exec sudo -u "$SUNSHINE_USER" "$0" "$@"
 			fi
-			# forward system-wide wayland socket
+			# forward system-wide wayland and pipewire sockets
 			export XDG_RUNTIME_DIR="/run/user/$UID"
 			export WAYLAND_DISPLAY=wayland-0
 			while ! test -d "$XDG_RUNTIME_DIR" ; do sleep 1 ; done
+			while ! test -d "$XDG_RUNTIME_DIR/pulse" ; do sleep 1 ; done
 			SUNSHINE_DIR="/run/user/$(id -u sunshine)"
+			ln -sf "$SUNSHINE_DIR/pipewire-0" "$XDG_RUNTIME_DIR/"
+			ln -sf "$SUNSHINE_DIR/pipewire-0-manager" "$XDG_RUNTIME_DIR/"
+			ln -sf "$SUNSHINE_DIR/pulse/native" "$XDG_RUNTIME_DIR/pulse/"
 			ln -sf "$SUNSHINE_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/"
 			# access to the Xwayland compatibility X11 display
 			export DISPLAY=:0
