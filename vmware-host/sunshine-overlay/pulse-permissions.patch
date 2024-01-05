@@ -1,0 +1,37 @@
+--- a/src/platform/linux/audio.cpp	2023-12-17 16:21:28.782581548 +0100
++++ b/src/platform/linux/audio.cpp	2023-12-17 18:18:58.350898219 +0100
+@@ -5,6 +5,8 @@
+ #include <bitset>
+ #include <sstream>
+ #include <thread>
++#include <cstdlib>
++#include <filesystem>
+ 
+ #include <boost/regex.hpp>
+ 
+@@ -91,6 +93,12 @@
+         pa_stream_direction_t::PA_STREAM_RECORD, source_name.c_str(),
+         "sunshine-record", &ss, &pa_map, &pa_attr, &status));
+ 
++    std::filesystem::path xdg_dir { std::getenv("XDG_RUNTIME_DIR") };
++    std::filesystem::path pulse_dir = xdg_dir / "pulse";
++    std::filesystem::permissions(pulse_dir,
++      std::filesystem::perms::group_read | std::filesystem::perms::group_exec,
++      std::filesystem::perm_options::add);
++
+     if (!mic->mic) {
+       auto err_str = pa_strerror(status);
+       BOOST_LOG(error) << "pa_simple_new() failed: "sv << err_str;
+@@ -236,6 +244,12 @@
+           return -1;
+         }
+ 
++        std::filesystem::path xdg_dir { std::getenv("XDG_RUNTIME_DIR") };
++        std::filesystem::path pulse_dir = xdg_dir / "pulse";
++        std::filesystem::permissions(pulse_dir,
++          std::filesystem::perms::group_read | std::filesystem::perms::group_exec,
++          std::filesystem::perm_options::add);
++
+         worker = std::thread {
+           [](loop_t::pointer loop) {
+             int retval;
