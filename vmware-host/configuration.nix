@@ -141,8 +141,8 @@
 	systemd.services.sunshine = {
 		description = "Sunshine desktop streaming from a wayland display server.";
 		wantedBy = [ "multi-user.target" ];
-		wants = [ "network-online.target" "vm-user-directories.service" ];
-		after = [ "network-online.target" "vm-user-directories.service" ];
+		wants = [ "network-online.target" "vm-user-directories.service" "keyring-unlock.service" ];
+		after = [ "network-online.target" "vm-user-directories.service" "keyring-unlock.service" ];
 		serviceConfig = {
 			User = "sunshine";
 			Group = "sunshine";
@@ -258,5 +258,31 @@
 		'';
 	};
 	security.polkit.enable = true;
+	services.gnome.gnome-keyring.enable = true;
+	systemd.services.keyring-unlock = {
+		description = "Unlocks the per-user keyrings using secrets stored in root’s home.";
+		wantedBy = [ "multi-user.target" ];
+		serviceConfig.Type = "forking";
+		script = let
+			normalUsers = lib.concatStringsSep " " (
+				builtins.attrNames (
+					lib.filterAttrs
+						(name: value: value.isNormalUser)
+						config.users.users
+				)
+			);
+		in ''
+			for user in ${normalUsers} ; do
+				secrets=~root/keyrings
+				test -d "$secrets" ||  mkdir --mode=700 "$secrets"
+				# random keyring unlock secret
+				if ! test -f "$secrets/$user" ; then
+					dd if=/dev/urandom bs=24 count=1 | base64 > "$secrets/$user"
+				fi
+				# launch gnome keyring daemon
+				${pkgs.shadow.su}/bin/su "$user" -c 'while ! test -S "/run/user/$UID/bus" ; do sleep 1 ; done ; DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$UID/bus" exec gnome-keyring-daemon --unlock --components=secrets' < "$secrets/$user"
+			done
+		'';
+	};
 	environment.defaultPackages = [ pkgs.rsync pkgs.unison ];
 }
