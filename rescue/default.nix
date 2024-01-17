@@ -1,4 +1,4 @@
-{ nixpkgs, system }:
+{ lib, system }:
 
 let
 	configuration = { modulesPath, ... }: {
@@ -14,7 +14,7 @@ let
 		};
 	};
 
-	nixos = nixpkgs.lib.nixosSystem {
+	nixos = lib.nixosSystem {
 		system = builtins.replaceStrings [ "darwin" ] [ "linux" ] system;
 		modules = [ configuration ];
 	};

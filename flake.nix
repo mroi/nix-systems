@@ -6,11 +6,14 @@
 		subdirs = [ "print-server" "rescue" ];
 		modules = [ "auto-upgrade" "config-install" "ssh-wifi-access" "stress-test-tools" ];
 		forAll = list: f: nixpkgs.lib.genAttrs list f;
+		callPackage = system: nixpkgs.lib.callPackageWith (nixpkgs.legacyPackages.${system} // {
+			inherit (nixpkgs) lib;
+		});
 
 	in {
 		packages = forAll systems (system:
 			forAll subdirs (subdir:
-				import ./${subdir} { inherit nixpkgs system; }
+				callPackage system ./${subdir} {}
 			)
 		);
 		apps = forAll systems (system:

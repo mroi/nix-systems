@@ -1,4 +1,4 @@
-{ nixpkgs, system }:
+{ lib }:
 
 let
 	configuration = { pkgs, modulesPath, ... }: {
@@ -13,7 +13,7 @@ let
 		};
 	};
 
-	nixos = nixpkgs.lib.nixosSystem {
+	nixos = lib.nixosSystem {
 		system = "aarch64-linux";
 		modules = [ configuration ];
 	};
