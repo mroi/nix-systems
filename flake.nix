@@ -13,7 +13,7 @@
 	in {
 		packages = forAll systems (system:
 			forAll subdirs (subdir:
-				callPackage system ./${subdir} {}
+				callPackage system ./${subdir}/package.nix {}
 			)
 		);
 		apps = forAll systems (system:
