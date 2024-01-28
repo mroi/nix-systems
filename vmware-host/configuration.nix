@@ -201,6 +201,14 @@
 					DISPLAY_SCALE=1
 				fi
 			fi
+			XWAYLAND_HIDPI="''${XWAYLAND_HIDPI:-false}"
+			if test -z "$XWAYLAND_SCALE" ; then
+				if "$XWAYLAND_HIDPI" ; then
+					XWAYLAND_SCALE="$DISPLAY_SCALE"
+				else
+					XWAYLAND_SCALE=1
+				fi
+			fi
 			# set desired resolution
 			export XDG_RUNTIME_DIR="/run/user/$(id -u sunshine)"
 			export WAYLAND_DISPLAY=wayland-0
@@ -208,6 +216,9 @@
 			# allow incoming user to access compatibility X11 display
 			export DISPLAY=:0
 			${pkgs.xorg.xhost}/bin/xhost "si:localuser:$SUNSHINE_USER" > /dev/null
+			# set scale factor presented to Xwayland applications
+			${pkgs.xorg.xprop}/bin/xprop -root -f _XWAYLAND_GLOBAL_OUTPUT_SCALE 32c -set _XWAYLAND_GLOBAL_OUTPUT_SCALE "$XWAYLAND_SCALE"
+			${pkgs.xorg.xsetroot}/bin/xsetroot -xcf ${pkgs.adwaita-icon-theme}/share/icons/Adwaita/cursors/left_ptr $((24 * $XWAYLAND_SCALE))
 		'')
 		(pkgs.writeShellScriptBin "sunshine-launch" ''
 			# switch user if necessary
@@ -230,6 +241,10 @@
 			# set cursor theme for HiDPI mouse pointer
 			export XCURSOR_PATH=${pkgs.adwaita-icon-theme}/share/icons
 			export XCURSOR_THEME=Adwaita
+			# ui scaling for legacy GTK applications
+			XWAYLAND_SCALE="$(${pkgs.xorg.xprop}/bin/xprop -root _XWAYLAND_GLOBAL_OUTPUT_SCALE)"
+			XWAYLAND_SCALE="''${XWAYLAND_SCALE##* = }"
+			export GDK_SCALE="$XWAYLAND_SCALE"
 			# offload rendering to Nvidia GPU
 			export DRI_PRIME=pci-0000_01_00_0!
 			export MESA_VK_DEVICE_SELECT=10de:2782
