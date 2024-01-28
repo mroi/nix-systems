@@ -17,9 +17,11 @@ pkgs.writeText "apps.json" (builtins.toJSON {
 					export SUNSHINE_CLIENT_WIDTH=${toString props.width}
 					export SUNSHINE_CLIENT_HEIGHT=${toString props.height}
 					export DISPLAY_SCALE=${toString props.scale}
+					export XWAYLAND_HIDPI=${lib.boolToString app.xwayland-hidpi or false}
 					exec sunshine-prepare
 				'';
 			}] ++ app.prep-cmd or [];
+			xwayland-hidpi = null;
 		});
 		vmware = pkgs.writeShellScript "vmware" ''
 			exec sunshine-launch ${pkgs.writeShellScript "vmware" ''
@@ -70,6 +72,7 @@ pkgs.writeText "apps.json" (builtins.toJSON {
 			name = "VMware";
 			image-path = ./vmware.png;
 			cmd = vmware;
+			xwayland-hidpi = true;
 		}
 	]) ++ (appsForUser "michael" unigine) ++ (appsForUser "paula" unigine);
 })
