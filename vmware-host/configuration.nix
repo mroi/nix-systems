@@ -161,9 +161,12 @@
 			#export WLR_RENDERER=vulkan
 			export DRI_PRIME=pci-0000_0c_00_0!
 			${pkgs.labwc}/bin/labwc &
+			# allow other users to access the wayland and X11 sockets
 			export WAYLAND_DISPLAY=wayland-0
 			while ! test -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ; do sleep 1 ; done
 			chmod 666 "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY"
+			while ! test -S /tmp/.X11-unix/X0 ; do sleep 1 ; done
+			chmod 770 /tmp/.X11-unix/X0
 			# desktop background color
 			${pkgs.swaybg}/bin/swaybg --color '#3d454c' &
 			# start sunshine server
@@ -189,6 +192,9 @@
 			export XDG_RUNTIME_DIR="/run/user/$(id -u sunshine)"
 			export WAYLAND_DISPLAY=wayland-0
 			${pkgs.wlr-randr}/bin/wlr-randr --output Virtual-1 --mode "$RESOLUTION" --scale "$DISPLAY_SCALE"
+			# allow incoming user to access compatibility X11 display
+			export DISPLAY=:0
+			${pkgs.xorg.xhost}/bin/xhost "si:localuser:$SUNSHINE_USER" > /dev/null
 		'')
 		(pkgs.writeShellScriptBin "sunshine-launch" ''
 			# switch user if necessary
@@ -202,6 +208,8 @@
 			while ! test -d "$XDG_RUNTIME_DIR" ; do sleep 1 ; done
 			SUNSHINE_DIR="/run/user/$(id -u sunshine)"
 			ln -sf "$SUNSHINE_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/"
+			# access to the Xwayland compatibility X11 display
+			export DISPLAY=:0
 			# set cursor theme for HiDPI mouse pointer
 			export XCURSOR_PATH=${pkgs.adwaita-icon-theme}/share/icons
 			export XCURSOR_THEME=Adwaita
