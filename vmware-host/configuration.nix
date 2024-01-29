@@ -65,7 +65,9 @@
 	# AMD GPU for wayland, WiFi firmware
 	nixpkgs.config.allowUnfree = true;
 	boot = {
-		kernelParams = lib.mkForce [ "panic=1" "boot.panic_on_fail" ];
+		kernelParams = lib.mkForce [ "panic=1" "boot.panic_on_fail"
+			"video=Virtual-1:5120x2880@60"
+		];
 		extraModprobeConfig = "options amdgpu virtual_display=0000:0c:00.0,1";
 		blacklistedKernelModules = [ "nouveau" ];
 	};
@@ -145,6 +147,9 @@
 			# configure keyboard layout
 			export XKB_DEFAULT_LAYOUT=${config.console.keyMap}
 			export XKB_DEFAULT_VARIANT=mac
+			# set cursor theme for HiDPI mouse pointer
+			export XCURSOR_PATH=${pkgs.adwaita-icon-theme}/share/icons
+			export XCURSOR_THEME=Adwaita
 			# start wayland compositor using AMD GPU
 			export WLR_DRM_DEVICES=$(readlink -f '/dev/dri/by-path/pci-0000:0c:00.0-card')
 			export WLR_RENDER_DRM_DEVICE=$(readlink -f '/dev/dri/by-path/pci-0000:0c:00.0-render')
@@ -166,8 +171,8 @@
 	environment.systemPackages = [
 		(pkgs.writeShellScriptBin "sunshine-prepare" ''
 			# defaults for unset variables
-			SUNSHINE_CLIENT_WIDTH="''${SUNSHINE_CLIENT_WIDTH:-2560}"
-			SUNSHINE_CLIENT_HEIGHT="''${SUNSHINE_CLIENT_HEIGHT:-1440}"
+			SUNSHINE_CLIENT_WIDTH="''${SUNSHINE_CLIENT_WIDTH:-5120}"
+			SUNSHINE_CLIENT_HEIGHT="''${SUNSHINE_CLIENT_HEIGHT:-2880}"
 			RESOLUTION="''${SUNSHINE_CLIENT_WIDTH}x''${SUNSHINE_CLIENT_HEIGHT}"
 			if test -z "$DISPLAY_SCALE" ; then
 				if test "$SUNSHINE_CLIENT_HEIGHT" -gt 1700 ; then
@@ -193,6 +198,9 @@
 			while ! test -d "$XDG_RUNTIME_DIR" ; do sleep 1 ; done
 			SUNSHINE_DIR="/run/user/$(id -u sunshine)"
 			ln -sf "$SUNSHINE_DIR/$WAYLAND_DISPLAY" "$XDG_RUNTIME_DIR/"
+			# set cursor theme for HiDPI mouse pointer
+			export XCURSOR_PATH=${pkgs.adwaita-icon-theme}/share/icons
+			export XCURSOR_THEME=Adwaita
 			# start actual application
 			exec "$@"
 		'')
