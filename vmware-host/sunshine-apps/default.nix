@@ -23,7 +23,7 @@ pkgs.writeText "apps.json" (builtins.toJSON {
 			}] ++ app.prep-cmd or [];
 			xwayland-hidpi = null;
 		});
-		vmware = pkgs.writeShellScript "vmware" ''
+		vmware = args: pkgs.writeShellScript "vmware" ''
 			exec sunshine-launch ${pkgs.writeShellScript "vmware" ''
 				# inject default configuration options
 				if ! test -d "$HOME/.vmware" ; then
@@ -41,7 +41,7 @@ pkgs.writeText "apps.json" (builtins.toJSON {
 					ln -snf /etc/vmware/license-* "/mnt/vm/$USER/"
 				fi
 				# launch VMware
-				exec vmware
+				exec vmware ${args}
 			''}
 		'';
 		unigine = [
@@ -71,8 +71,31 @@ pkgs.writeText "apps.json" (builtins.toJSON {
 		{
 			name = "VMware";
 			image-path = ./vmware.png;
-			cmd = vmware;
+			cmd = vmware "";
 			xwayland-hidpi = true;
 		}
+		{
+			name = "Windows 98";
+			image-path = ./windows-98.png;
+			cmd = vmware "-X -q '/mnt/vm/michael/Windows 98.vmwarevm/Windows 98.vmx'";
+		}
+		{
+			name = "Windows XP";
+			image-path = ./windows-xp.png;
+			cmd = vmware "-X -q '/mnt/vm/michael/Windows XP.vmwarevm/Windows XP.vmx'";
+		}
+		{
+			name = "Windows 10";
+			image-path = ./windows-10.png;
+			cmd = vmware "-X -q '/mnt/vm/michael/Windows 10.vmwarevm/Windows 10.vmx'";
+			xwayland-hidpi = true;
+		}
+	]) ++ (appsForUser "paula" [
+#		{
+#			name = "Windows 10";
+#			image-path = ./windows-10.png;
+#			cmd = vmware "-X -q '/mnt/vm/paula/Windows 10.vmwarevm/Windows 10.vmx'";
+#			xwayland-hidpi = true;
+#		}
 	]) ++ (appsForUser "michael" unigine) ++ (appsForUser "paula" unigine);
 })
