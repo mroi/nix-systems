@@ -33,11 +33,24 @@
 	networking.hostName = "themisto";
 	services.printing = {
 		enable = true;
-		browsing = true;
-		stateless = true;
-		defaultShared = true;
+		startWhenNeeded = false;
 		listenAddresses = [ "*:631" ];
 		allowFrom = [ "all" ];
+		openFirewall = true;
 		drivers = [ pkgs.hplip ];
+		browsing = true;
+		defaultShared = true;
+		extraConf = ''
+			PreserveJobHistory No
+			ReadyPaperSizes A4
+		'';
 	};
+	hardware.printers.ensurePrinters = [{
+		name = "HP_LaserJet_M15";
+		description = "HP LaserJet M15";
+		location = "Zuhause";
+		deviceUri = "hp:/usb/HP_LaserJet_M14-M17?serial=JPCLB31842";
+		model = "drv:///hp/hpcups.drv/hp-laserjet_m14-m17.ppd";
+		ppdOptions.PageSize = "A4";
+	}];
 }
