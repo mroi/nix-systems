@@ -24,7 +24,10 @@
 		time.timeZone = "Europe/Berlin";
 
 		# command line environment
-		nix.settings.extra-experimental-features = [ "flakes" "nix-command" ];
+		nix = {
+			settings.extra-experimental-features = [ "flakes" "nix-command" ];
+			extraOptions = "use-xdg-base-directories = true";
+		};
 		programs.bash.promptInit = ''
 			if test "$SSH_CLIENT" || test "$SSH2_CLIENT" ; then
 				SHELL_PROMPTCOLOR=''${SHELL_PROMPTCOLOR:-2}
