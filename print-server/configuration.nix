@@ -23,6 +23,12 @@
 	services.journald.extraConfig = "Storage=volatile";
 	services.fstrim.enable = true;
 
+	# add some swap because the Raspberry’s 512MB is too little for NixOS upgrades
+	swapDevices = [{
+		device = "/var/lib/swapfile";
+		size = 4 * 1024;
+	}];
+
 	# CUPS printing with HP driver
 	networking.hostName = "themisto";
 	services.printing = {
