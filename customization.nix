@@ -51,6 +51,8 @@
 			LESSHISTFILE = "-";
 		};
 		environment.shellAliases = {
+			".." = "cd ..";
+			"..." = "cd ../..";
 			la = "ls -al";
 			pico = "nano -wL";
 		};
