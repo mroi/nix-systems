@@ -24,7 +24,7 @@
 	services.fstrim.enable = true;
 
 	# CUPS printing with HP driver
-	networking.hostName = builtins.baseNameOf ./.;
+	networking.hostName = "themisto";
 	services.printing = {
 		enable = true;
 		browsing = true;
