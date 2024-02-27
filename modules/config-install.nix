@@ -22,6 +22,7 @@ in {
 					];
 				}
 			EOF
+			ln -s ${configFiles} /nix/var/nix/gcroots/configuration
 		fi
 	'';
 }
