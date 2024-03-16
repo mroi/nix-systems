@@ -44,9 +44,9 @@
 			) // {
 				ssh = {
 					type = "app";
-					program = "${nixpkgs.legacyPackages.${system}.writeScriptBin "ssh-nixos" ''
+					program = "${nixpkgs.legacyPackages.${system}.writeScript "ssh-nixos" ''
 						ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i ~/.ssh/nixos -p 22022 root@localhost
-					''}/bin/ssh-nixos";
+					''}";
 				};
 			}
 		);
