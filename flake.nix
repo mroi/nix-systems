@@ -37,6 +37,7 @@
 					};
 					nixos = nixpkgs.lib.nixosSystem {
 						modules = [ configuration ];
+						specialArgs = { name = subdir; };
 					};
 				in {
 					type = "app";
@@ -57,6 +58,7 @@
 		nixosConfigurations = forAll subdirs (subdir:
 			nixpkgs.lib.nixosSystem {
 				modules = [ ./${subdir}/configuration.nix ];
+				specialArgs = { name = subdir; };
 			}
 		);
 	};

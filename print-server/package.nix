@@ -6,7 +6,6 @@ let
 			./configuration.nix
 			../modules/config-install.nix
 		];
-		nix.configFolderName = builtins.baseNameOf ./.;
 		sdImage = {
 			imageBaseName = builtins.baseNameOf ./.;
 			compressImage = false;
@@ -15,6 +14,7 @@ let
 
 	nixos = lib.nixosSystem {
 		modules = [ configuration ];
+		specialArgs = { name = builtins.baseNameOf ./.; };
 	};
 
 in nixos.config.system.build.sdImage

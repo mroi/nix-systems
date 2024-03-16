@@ -25,6 +25,7 @@
 
 		# command line environment
 		nix = {
+			nixPath = [ "nixpkgs=flake:nixpkgs" ];
 			settings.extra-experimental-features = [ "flakes" "nix-command" ];
 			extraOptions = "use-xdg-base-directories = true";
 		};

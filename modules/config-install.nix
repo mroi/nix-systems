@@ -1,28 +1,23 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, name, ... }: {
 
-let
-	folder = config.nix.configFolderName;
-	configFiles = import ./config-build.nix {
-		inherit pkgs folder;
-	};
-
-in {
-	options.nix.configFolderName = lib.mkOption {
-		type = lib.types.str;
-		description = "folder name containing the main configuration.nix, will be installed in /etc/nixos";
-	};
-	
-	config.boot.postBootCommands = ''
-		# install system configuration
-		if ! test -f /etc/nixos/configuration.nix ; then
-			cat > /etc/nixos/configuration.nix <<- 'EOF'
-				{ ... }: {
-					imports = [
-						${configFiles}/${folder}/configuration.nix
-					];
-				}
-			EOF
-			ln -s ${configFiles} /nix/var/nix/gcroots/configuration
+	config.boot.postBootCommands = let
+		configFiles = pkgs.stdenvNoCC.mkDerivation {
+			name = "configuration";
+			src = ./..;
+			phases = [ "unpackPhase" "installPhase" ];
+			installPhase = ''
+				mkdir $out
+				cp -r $src/${name} $out/
+				cp -r $src/modules $out/
+				cp $src/customization.nix $out/
+				cp $src/flake.* $out/
+			'';
+		};
+	in ''
+		# copy system configuration flake
+		if ! test -f /etc/nixos/flake.nix ; then
+			cp -r ${configFiles}/* /etc/nixos/
+			chmod -R u+w /etc/nixos/*
 		fi
 	'';
 }
