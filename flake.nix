@@ -24,6 +24,8 @@
 							./${subdir}/configuration.nix
 							"${modulesPath}/virtualisation/qemu-vm.nix"
 						];
+						nixpkgs.system = nixpkgs.lib.mkForce
+							(builtins.replaceStrings [ "darwin" ] [ "linux" ] system);
 						virtualisation.host.pkgs = nixpkgs.legacyPackages.${system};
 						virtualisation.qemu.guestAgent.enable = false;
 						virtualisation.forwardPorts = [{
@@ -35,7 +37,6 @@
 					};
 					nixos = nixpkgs.lib.nixosSystem {
 						modules = [ configuration ];
-						system = builtins.replaceStrings [ "darwin" ] [ "linux" ] system;
 					};
 				in {
 					type = "app";
@@ -54,7 +55,9 @@
 			import modules/${module}.nix
 		);
 		nixosConfigurations = forAll subdirs (subdir:
-			import ./${subdir}/configuration.nix
+			nixpkgs.lib.nixosSystem {
+				modules = [ ./${subdir}/configuration.nix ];
+			}
 		);
 	};
 }

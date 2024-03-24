@@ -14,7 +14,6 @@ let
 	};
 
 	nixos = lib.nixosSystem {
-		system = "aarch64-linux";
 		modules = [ configuration ];
 	};
 
