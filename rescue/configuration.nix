@@ -14,8 +14,7 @@
 		file
 	];
 
-	environment.variables = {
-		TERM = "vt220";
-	};
 	services.getty.autologinUser = "root";
+	environment.variables = { TERM = "linux"; };
+	environment.shellInit = "setterm --blank=5";
 }
