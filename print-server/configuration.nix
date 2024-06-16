@@ -19,6 +19,15 @@
 		size = 4 * 1024;
 	}];
 
+	# disable CUPS backends to reduce system size
+	nixpkgs.overlays = [ (final: prev: {
+		runCommand = name: env: command:
+			if name == "additional-cups-backends" then
+				(prev.runCommand name env "mkdir -p $out")
+			else
+				(prev.runCommand name env command);
+	})];
+
 	# CUPS printing with HP driver
 	networking.hostName = "themisto";
 	services.printing = {

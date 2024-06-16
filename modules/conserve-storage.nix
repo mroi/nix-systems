@@ -1,4 +1,4 @@
-{ modulesPath, ... }: {
+{ lib, modulesPath, ... }: {
 	imports = [
 		"${modulesPath}/profiles/minimal.nix"
 	];
@@ -13,4 +13,8 @@
 	};
 	services.journald.extraConfig = "Storage=volatile";
 	services.fstrim.enable = true;
+
+	# reduce closure size: disable base CLI tools, ZFS
+	disabledModules = [ "${modulesPath}/profiles/base.nix" ];
+	boot.supportedFilesystems = { zfs = lib.mkForce false; };
 }
