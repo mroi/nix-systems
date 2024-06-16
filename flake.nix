@@ -57,6 +57,7 @@
 		);
 		nixosConfigurations = forAll subdirs (subdir:
 			nixpkgs.lib.nixosSystem {
+				system = nixpkgs.lib.head systems;
 				modules = [ ./${subdir}/configuration.nix ];
 				specialArgs = { name = subdir; };
 			}
