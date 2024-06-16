@@ -19,12 +19,12 @@
 		apps = forAll systems (system:
 			forAll subdirs (subdir:
 				let
-					configuration = { modulesPath, ... }: {
+					configuration = { lib, modulesPath, ... }: {
 						imports = [
 							./${subdir}/configuration.nix
 							"${modulesPath}/virtualisation/qemu-vm.nix"
 						];
-						nixpkgs.system = nixpkgs.lib.mkForce
+						nixpkgs.hostPlatform = lib.mkForce
 							(builtins.replaceStrings [ "darwin" ] [ "linux" ] system);
 						virtualisation.host.pkgs = nixpkgs.legacyPackages.${system};
 						virtualisation.qemu.guestAgent.enable = false;

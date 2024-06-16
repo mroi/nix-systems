@@ -7,8 +7,8 @@
 		../modules/ssh-wifi-access.nix
 		../customization.nix
 	];
-	system.stateVersion = "23.11";
-	nixpkgs.system = "aarch64-linux";
+	system.stateVersion = "24.05";
+	nixpkgs.hostPlatform = "aarch64-linux";
 	environment.noXlibs = false;  # set true by minimal.nix, but causes binary cache misses
 
 	# FIXME: SSH crashes with the Rust nscd implementation
