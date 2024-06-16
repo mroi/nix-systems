@@ -1,6 +1,6 @@
-{ lib, modulesPath, ... }: {
+{ lib, raspberry, modulesPath, ... }: {
 	imports = [
-		"${modulesPath}/installer/sd-card/sd-image-aarch64.nix"
+		raspberry.nixosModules.raspberry-pi
 		"${modulesPath}/profiles/headless.nix"
 		../modules/auto-upgrade.nix
 		../modules/conserve-storage.nix
