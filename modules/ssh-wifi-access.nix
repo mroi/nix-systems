@@ -1,7 +1,4 @@
 { config, pkgs, ... }: {
-	imports = [
-		../customization.nix
-	];
 
 	# configure basic network services
 	networking = {
