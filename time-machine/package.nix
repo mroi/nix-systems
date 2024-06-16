@@ -1,4 +1,4 @@
-{ lib }:
+{ lib, raspberry }:
 
 let
 	configuration = { pkgs, modulesPath, ... }: {
@@ -14,7 +14,7 @@ let
 
 	nixos = lib.nixosSystem {
 		modules = [ configuration ];
-		specialArgs = { name = builtins.baseNameOf ./.; };
+		specialArgs = { name = builtins.baseNameOf ./.; inherit raspberry; };
 	};
 
 in nixos.config.system.build.sdImage
