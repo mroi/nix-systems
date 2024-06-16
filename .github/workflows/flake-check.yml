@@ -1,0 +1,26 @@
+# check all outputs of the flake
+name: Check Flake
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check Flake Outputs
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v26
+
+    - name: Check flake
+      run: nix flake check --all-systems
