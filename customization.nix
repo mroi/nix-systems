@@ -55,7 +55,7 @@
 			".." = "cd ..";
 			"..." = "cd ../..";
 			la = "ls -al";
-			pico = "nano -wL";
+			e = "nano -wL";
 		};
 		environment.variables = {
 			HISTFILE = "";
