@@ -1,4 +1,4 @@
-{ lib, pkgs, raspberry, modulesPath, ... }: {
+{ config, lib, pkgs, raspberry, modulesPath, ... }: {
 	imports = [
 		raspberry.nixosModules.raspberry-pi
 		"${modulesPath}/profiles/headless.nix"
@@ -54,4 +54,31 @@
 			};
 		};
 	};
+
+	# mDNS advertisements
+	services.avahi.extraServiceFiles.time-machine = let
+		capitalizedHostName =
+			(lib.toUpper (lib.substring 0 1 config.networking.hostName)) +
+			(lib.toLower (lib.substring 1 (-1) config.networking.hostName));
+		shareName = lib.head (lib.attrNames config.services.samba.shares);
+	in ''<?xml version="1.0" standalone='no'?>
+		<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+		<service-group>
+			<name>${capitalizedHostName}</name>
+			<service>
+				<type>_smb._tcp</type>
+				<port>445</port>
+			</service>
+			<service>
+				<type>_adisk._tcp</type>
+				<txt-record>dk0=adVN=${shareName},adVF=0x82</txt-record>
+				<txt-record>sys=adVF=0x100</txt-record>
+			</service>
+			<service>
+				<type>_device-info._tcp</type>
+				<port>0</port>
+				<txt-record>model=AirPort</txt-record>
+			</service>
+		</service-group>
+	'';
 }
