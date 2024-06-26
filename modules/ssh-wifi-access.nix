@@ -1,15 +1,17 @@
 { config, lib, ... }: {
 
 	# configure basic network services
-	networking = {
-		wireless.enable = true;
-		wireless.networks.${config.customization.wifi.ssid}.psk = config.customization.wifi.password;
+	networking.wireless = {
+		enable = true;
+		networks.${config.customization.wifi.ssid}.psk = config.customization.wifi.password;
 	};
 	services.openssh = {
 		enable = true;
-		settings.PermitRootLogin = "yes";
-		settings.PasswordAuthentication = false;
-		settings.KbdInteractiveAuthentication = false;
+		settings = {
+			PermitRootLogin = "yes";
+			PasswordAuthentication = false;
+			KbdInteractiveAuthentication = false;
+		};
 	};
 	users.users.root.openssh.authorizedKeys.keys = [
 		config.customization.authorizedKey
