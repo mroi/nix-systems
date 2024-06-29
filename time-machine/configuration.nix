@@ -55,6 +55,9 @@
 		};
 	};
 
+	# Samba-created users should be denied SSH login
+	services.openssh.settings.AllowUsers = [ "root" ];
+
 	# mDNS advertisements
 	services.avahi.extraServiceFiles.time-machine = let
 		capitalizedHostName =
