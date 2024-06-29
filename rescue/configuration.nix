@@ -14,7 +14,22 @@
 		file
 	];
 
+	users.users.root.hashedPassword = "";
 	services.getty.autologinUser = "root";
 	environment.variables = { TERM = "linux"; };
 	environment.shellInit = "setterm --blank=5";
+
+	#services.avahi = {
+	#	enable = true;
+	#	nssmdns4 = true;
+	#};
+
+	#security.pam.services.sshd.allowNullPassword = true;
+	#services.openssh = {
+	#	enable = true;
+	#	settings = {
+	#		PermitRootLogin = "yes";
+	#		PermitEmptyPasswords = "yes";
+	#	};
+	#};
 }
