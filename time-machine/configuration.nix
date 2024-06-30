@@ -1,14 +1,17 @@
-{ config, lib, pkgs, raspberry, modulesPath, ... }: {
+{ config, lib, pkgs, modulesPath, ... }: {
 	imports = [
-		raspberry.nixosModules.raspberry-pi
 		"${modulesPath}/profiles/headless.nix"
 		../modules/auto-upgrade.nix
 		../modules/conserve-storage.nix
 		../modules/ssh-wifi-access.nix
 		../customization.nix
+		./raspberry.nix
 	];
 	system.stateVersion = "24.11";
 	nixpkgs.system = "aarch64-linux";
+
+	# FIXME: auto upgrade uses a submodule
+	system.autoUpgrade.flake = lib.mkForce "/etc/nixos?submodules=1#time-machine";
 
 	# disable WiFi, Ethernet only
 	networking.hostName = "chaldene";

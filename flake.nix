@@ -1,13 +1,13 @@
 {
 	description = "systems based on Nix and NixOS";
 	nixConfig = {
-		extra-substituters = [ "https://raspberry-pi-nix.cachix.org" ];
+		extra-substituters = [ "https://nix-community.cachix.org" ];
 		extra-trusted-public-keys = [
-			"raspberry-pi-nix.cachix.org-1:WmV2rdSangxW0rZjY/tBvBDSaNFQ3DyEQsVw8EvHn9o="
+			"nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
 		];
 	};
 	inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-	inputs.raspberry.url = "github:tstat/raspberry-pi-nix/6045de5f79ac8eb432cd75e82e1accfb48caff45";
+	inputs.raspberry.url = "./time-machine/raspberry";
 	outputs = { self, nixpkgs, raspberry }: let
 		systems = [ "x86_64-linux"  "x86_64-darwin" ];
 		subdirs = [ "print-server" "rescue" "time-machine" ];

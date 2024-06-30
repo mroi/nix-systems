@@ -96,18 +96,14 @@
         "u-boot-src": "u-boot-src"
       },
       "locked": {
-        "lastModified": 1718664987,
+        "lastModified": 1,
         "narHash": "sha256-9MSY3LkvX50bVg21wdFQJRdVnoFkvORqgQRdJG990W8=",
-        "owner": "tstat",
-        "repo": "raspberry-pi-nix",
-        "rev": "6045de5f79ac8eb432cd75e82e1accfb48caff45",
-        "type": "github"
+        "path": "/nix/store/jgihqp5mg7rby5kd9g8p0d0qzm4jjp5s-source/time-machine/raspberry",
+        "type": "path"
       },
       "original": {
-        "owner": "tstat",
-        "repo": "raspberry-pi-nix",
-        "rev": "6045de5f79ac8eb432cd75e82e1accfb48caff45",
-        "type": "github"
+        "path": "/nix/store/jgihqp5mg7rby5kd9g8p0d0qzm4jjp5s-source/time-machine/raspberry",
+        "type": "path"
       }
     },
     "root": {
