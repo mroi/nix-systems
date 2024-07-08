@@ -11,6 +11,7 @@
 		fsType = "tmpfs";
 		options = [ "mode=1777" ];
 	};
+	nix.settings.auto-optimise-store = true;
 	services.journald.extraConfig = "Storage=volatile";
 	services.fstrim.enable = true;
 
