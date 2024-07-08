@@ -11,6 +11,7 @@
 		channel.enable = false;
 		settings.keep-build-log = false;
 		settings.max-jobs = 1;
+		settings.sync-before-registering = true;
 		gc.automatic = true;
 		gc.options = "--delete-older-than 100d";
 	};
