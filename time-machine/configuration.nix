@@ -1,5 +1,6 @@
 { config, lib, pkgs, modulesPath, ... }: {
 	imports = [
+		"${modulesPath}/installer/sd-card/sd-image.nix"
 		"${modulesPath}/profiles/headless.nix"
 		../modules/auto-upgrade.nix
 		../modules/conserve-storage.nix
@@ -9,9 +10,6 @@
 	];
 	system.stateVersion = "24.11";
 	nixpkgs.system = "aarch64-linux";
-
-	# FIXME: auto upgrade uses a submodule
-	system.autoUpgrade.flake = lib.mkForce "/etc/nixos?submodules=1#time-machine";
 
 	# disable WiFi, Ethernet only
 	networking.hostName = "chaldene";

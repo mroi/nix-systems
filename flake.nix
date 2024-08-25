@@ -1,21 +1,13 @@
 {
 	description = "systems based on Nix and NixOS";
-	nixConfig = {
-		extra-substituters = [ "https://nix-community.cachix.org" ];
-		extra-trusted-public-keys = [
-			"nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-		];
-	};
 	inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-	inputs.raspberry.url = "./time-machine/raspberry";
-	outputs = { self, nixpkgs, raspberry }: let
+	outputs = { self, nixpkgs }: let
 		systems = [ "x86_64-linux"  "x86_64-darwin" ];
 		subdirs = [ "print-server" "rescue" "time-machine" ];
 		modules = [ "auto-upgrade" "config-install" "conserve-storage" "ssh-wifi-access" "stress-test-tools" ];
 		forAll = list: f: nixpkgs.lib.genAttrs list f;
 		callPackage = system: nixpkgs.lib.callPackageWith (nixpkgs.legacyPackages.${system} // {
 			inherit (nixpkgs) lib;
-			inherit raspberry;
 		});
 
 	in {
@@ -45,7 +37,7 @@
 					};
 					nixos = nixpkgs.lib.nixosSystem {
 						modules = [ configuration ];
-						specialArgs = { name = subdir; inherit raspberry; };
+						specialArgs = { name = subdir; };
 					};
 				in {
 					type = "app";
@@ -67,7 +59,7 @@
 			nixpkgs.lib.nixosSystem {
 				system = nixpkgs.lib.head systems;
 				modules = [ ./${subdir}/configuration.nix ];
-				specialArgs = { name = subdir; inherit raspberry; };
+				specialArgs = { name = subdir; };
 			}
 		);
 	};

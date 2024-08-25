@@ -1,3 +1,0 @@
-[submodule "time-machine/raspberry"]
-	path = time-machine/raspberry
-	url = https://github.com/nix-community/raspberry-pi-nix.git
