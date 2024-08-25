@@ -11,6 +11,9 @@
 	system.stateVersion = "24.11";
 	nixpkgs.system = "aarch64-linux";
 
+	# FIXME: boot from USB as a temporary fallback
+	hardware.raspberry-pi.bootOrder = [ "usb" "sd-card" ];
+
 	# disable WiFi, Ethernet only
 	networking.hostName = "chaldene";
 	networking.wireless.enable = lib.mkForce false;

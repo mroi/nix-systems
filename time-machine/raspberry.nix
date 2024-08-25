@@ -3,6 +3,17 @@
 	# this would be pulled in by sd-image.nix, but we know we are targeting a Raspberry
 	disabledModules = [ "profiles/all-hardware.nix" ];
 
+	options.hardware.raspberry-pi = {
+
+		bootOrder = lib.mkOption {
+			type = lib.types.listOf (lib.types.enum [
+				"sd-card" "usb" "nvme"
+			]);
+			default = [ "sd-card" "usb" ];
+			description = "Devices are checked for a bootable file system in this order.";
+		};
+	};
+
 	config = let
 
 		# Current uboot does not reliably boot the Raspberry Pi 5. Until this changes,
@@ -108,5 +119,43 @@
 				hardware.raspberry-pi.config-output = configFile;
 			};
 		}).config.systemd.services.raspberry-pi-firmware-migrate;
+
+		# configure boot device order
+		systemd.services.raspberry-pi-boot-order = {
+			description = "Boot Device Order";
+			wantedBy = [ "multi-user.target" ];
+			wants = [ "local-fs.target" ];
+			after = [ "local-fs.target" ];
+			serviceConfig = { Type = "oneshot"; };
+			script = let
+				bootMap = { sd-card = "1"; usb = "4"; nvme = "6"; };
+				bootOrder = lib.pipe config.hardware.raspberry-pi.bootOrder [
+					(map (x: lib.getAttr x bootMap))
+					lib.reverseList
+					lib.concatStrings
+					(x: "0xf" + x)
+				];
+			in ''
+				config=${pkgs.raspberrypi-eeprom}/bin/rpi-eeprom-config
+				if ! $config | grep -Fxq 'BOOT_ORDER=${bootOrder}' ; then
+					$config | sed '
+						# replace existing config entry
+						/^BOOT_ORDER=/{
+							s/=.*$/=${bootOrder}/
+							# output the remaining input
+							:loop
+							n
+							b loop
+						}
+						# if not found, append new entry
+						''${
+							s/$/\nBOOT_ORDER=${bootOrder}/
+						}
+					' > boot.conf
+					$config --apply boot.conf
+					rm boot.conf
+				fi
+			'';
+		};
 	};
 }
