@@ -88,4 +88,33 @@
 			</service>
 		</service-group>
 	'';
+
+	# auto-activate system upgrades when Samba is quiescent
+	systemd.services.quiescent-activate = {
+		description = "Quiescent Upgrade Activation";
+		wantedBy = [ "multi-user.target" ];
+		wants = [ "local-fs.target" ];
+		after = [ "local-fs.target" ];
+		path = [ config.services.samba.package config.systemd.package ];
+		startAt = "06:00";
+		script = ''
+			currConf=$(readlink -f /run/current-system)
+			nextConf=$(readlink -f /nix/var/nix/profiles/system)
+			if test "$currConf" != "$nextConf" ; then
+				# check for running Samba connections
+				while ! smbstatus --processes --json | grep --quiet --fixed-strings '"sessions": {}' ; do
+					echo "waiting for Samba to quiesce"
+					sleep 300
+				done
+				# currently no running Samba connections: activate system upgrade
+				currBoot=$(readlink /run/booted-system/{firmware,initrd,kernel,kernel-modules,systemd})
+				nextBoot=$(readlink /nix/var/nix/profiles/system/{firmware,initrd,kernel,kernel-modules,systemd})
+				if test "$currBoot" = "$nextBoot" ; then
+					/nix/var/nix/profiles/system/bin/switch-to-configuration switch
+				else
+					reboot
+				fi
+			fi
+		'';
+	};
 }
