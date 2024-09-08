@@ -26,7 +26,7 @@
 		kernelVersion = "v6_6_31";
 		kernel = flake.packages.aarch64-linux."linux-${kernelVersion}-${board}";
 		kernelParams = pkgs.writeText "cmdline.txt" "${lib.concatStringsSep " " config.boot.kernelParams}";
-		configFile = pkgs.runCommand "config.txt" {} ''
+		configFile = pkgs.runCommand "config.txt" {} (''
 			cat <<- EOF > $out
 				# This is a generated file. Do not edit!
 				[all]
@@ -38,8 +38,10 @@
 				enable_uart=1
 				kernel=kernel.img
 				dtoverlay=vc4-kms-v3d
-
-				dtoverlay=
+		'' + lib.optionalString (!config.networking.wireless.enable) ''
+				dtoverlay=disable-wifi
+				dtoverlay=disable-bt
+		'' + ''
 
 				[cm4]
 				otg_mode=1
@@ -47,7 +49,7 @@
 				[pi4]
 				arm_boost=1
 			EOF
-		'';
+		'');
 
 	in {
 
