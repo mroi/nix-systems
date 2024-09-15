@@ -30,11 +30,11 @@
 	users.groups.time-machine = {};
 	services.samba = {
 		enable = true;
-		enableNmbd = false;
+		nmbd.enable = false;
 		openFirewall = true;
-		extraConfig = ''
-			server smb encrypt = required
-			add user script = ${pkgs.writeShellScript "add-user" ''
+		settings.global = {
+			"server smb encrypt" = "required";
+			"add user script" = "${pkgs.writeShellScript "add-user" ''
 				${pkgs.shadow}/bin/useradd \
 					--home /var/empty --no-create-home \
 					--shell /run/current-system/sw/bin/nologin \
@@ -43,19 +43,17 @@
 					$1
 				mkdir -p -m 700 /mnt/tm/$1
 				chown $1:time-machine /mnt/tm/$1
-			''} %u
-			delete user script = ${pkgs.writeShellScript "delete-user" ''
+			''} %u";
+			"delete user script" = "${pkgs.writeShellScript "delete-user" ''
 				${pkgs.shadow}/bin/userdel $1
-			''} %u
-		'';
-		shares = {
-			"Time Machine" = {
-				path = "/mnt/tm/%u";
-				"read only" = "no";
-				"fruit:aapl" = "yes";
-				"fruit:time machine" = "yes";
-				"vfs objects" = "catia fruit streams_xattr";
-			};
+			''} %u";
+		};
+		settings."Time Machine" = {
+			path = "/mnt/tm/%u";
+			"read only" = "no";
+			"fruit:aapl" = "yes";
+			"fruit:time machine" = "yes";
+			"vfs objects" = "catia fruit streams_xattr";
 		};
 	};
 
@@ -67,7 +65,7 @@
 		capitalizedHostName =
 			(lib.toUpper (lib.substring 0 1 config.networking.hostName)) +
 			(lib.toLower (lib.substring 1 (-1) config.networking.hostName));
-		shareName = lib.head (lib.attrNames config.services.samba.shares);
+		shareName = lib.head (lib.remove "global" (lib.attrNames config.services.samba.settings));
 	in ''<?xml version="1.0" standalone='no'?>
 		<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
 		<service-group>
