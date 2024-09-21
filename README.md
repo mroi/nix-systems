@@ -9,6 +9,8 @@ of sketchy security) WiFi functionality
 
 * a [rescue](rescue) system on a bootable ISO that can be launched from a USB stick
 
+* a Samba server for [Time Machine](time-machine) backups
+
 ___
 This work is licensed under the [WTFPL](http://www.wtfpl.net/), so you can do anything you 
 want with it.
