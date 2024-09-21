@@ -62,12 +62,12 @@
 	};
 	services.fstrim.enable = true;
 
-	# AMD GPU for wayland, WiFi firmware
+	# AMD GPU for wayland, Nvidia GPU for explicit offload, WiFi firmware
 	nixpkgs.config.allowUnfree = true;
+	services.xserver.videoDrivers = [ "nvidia" ];
 	boot = {
-		kernelParams = lib.mkForce [ "panic=1" "boot.panic_on_fail" ];
+		kernelParams = lib.mkForce [ "panic=1" "boot.panic_on_fail" "nvidia-drm.modeset=1" ];
 		extraModprobeConfig = "options amdgpu virtual_display=0000:0c:00.0,1";
-		blacklistedKernelModules = [ "nouveau" ];
 		extraModulePackages = [
 			# patch amdgpu module to add higher resolutions to the virtual display
 			(pkgs.callPackage ./patch-amdgpu.nix {
@@ -79,6 +79,11 @@
 		firmware = [ pkgs.linux-firmware ];
 		wirelessRegulatoryDatabase = true;
 		graphics.enable = true;
+		nvidia = {
+			open = true;
+			nvidiaPersistenced = true;
+			nvidiaSettings = false;
+		};
 	};
 
 	# hostname, IP address, user accounts
@@ -225,6 +230,12 @@
 			# set cursor theme for HiDPI mouse pointer
 			export XCURSOR_PATH=${pkgs.adwaita-icon-theme}/share/icons
 			export XCURSOR_THEME=Adwaita
+			# offload rendering to Nvidia GPU
+			export DRI_PRIME=pci-0000_01_00_0!
+			export MESA_VK_DEVICE_SELECT=10de:2782
+			export MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE=1
+			export __NV_PRIME_RENDER_OFFLOAD=1
+			export __GLX_VENDOR_LIBRARY_NAME=nvidia
 			# start actual application
 			exec "$@"
 		'')
