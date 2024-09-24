@@ -1,7 +1,7 @@
 { lib, system }:
 
 let
-	configuration = { modulesPath, ... }: {
+	configuration = {
 		imports = [
 			./configuration.nix
 		];
