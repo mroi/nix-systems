@@ -20,10 +20,10 @@
 		# the official Raspberry boot process with their modified kernel is used.
 		# https://github.com/nix-community/raspberry-pi-nix
 
-		flakeUrl = "github:nix-community/raspberry-pi-nix/97c85054d16579b5bbc3e31ea346e273990f0f93";
+		flakeUrl = "github:nix-community/raspberry-pi-nix/db08995cd65ff26ec3aef48f80bfa964e623c46a";
 		flake = builtins.getFlake flakeUrl;
 		board = "bcm2712";
-		kernelVersion = "v6_6_31";
+		kernelVersion = "v6_6_54";
 		kernel = flake.packages.aarch64-linux."linux-${kernelVersion}-${board}";
 		kernelParams = pkgs.writeText "cmdline.txt" "${lib.concatStringsSep " " config.boot.kernelParams}";
 		configFile = pkgs.runCommand "config.txt" {} (''
