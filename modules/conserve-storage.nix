@@ -2,7 +2,6 @@
 	imports = [
 		"${modulesPath}/profiles/minimal.nix"
 	];
-	environment.noXlibs = false;  # set true by minimal.nix, but causes binary cache misses
 
 	# reduce writes to the file system and enable trimming
 	fileSystems."/".options = [ "noatime" ];
