@@ -20,7 +20,7 @@
 		# the official Raspberry boot process with their modified kernel is used.
 		# https://github.com/nix-community/raspberry-pi-nix
 
-		flakeUrl = "github:nix-community/raspberry-pi-nix/db08995cd65ff26ec3aef48f80bfa964e623c46a";
+		flakeUrl = "github:nix-community/raspberry-pi-nix/57e8e8e84221c0f89d50a871ce1705e345fd7912";
 		flake = builtins.getFlake flakeUrl;
 		board = "bcm2712";
 		kernelVersion = "v6_6_54";
@@ -53,8 +53,8 @@
 
 	in {
 
+		# keep firmware uncompressed for the Raspberry boot process
 		nixpkgs.overlays = [ (prev: final: {
-			rpi-kernels.${kernelVersion}.${board} = kernel;
 			raspberrypifw = flake.packages.aarch64-linux.firmware.overrideAttrs {
 				compressFirmware = false;
 			};
