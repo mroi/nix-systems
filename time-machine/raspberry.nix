@@ -20,7 +20,7 @@
 		# the official Raspberry boot process with their modified kernel is used.
 		# https://github.com/nix-community/raspberry-pi-nix
 
-		flakeUrl = "github:nix-community/raspberry-pi-nix/57e8e8e84221c0f89d50a871ce1705e345fd7912";
+		flakeUrl = "github:nix-community/raspberry-pi-nix/3a016ff26c2ca6e0052f3f17c892bb7406eb0c84";
 		flake = builtins.getFlake flakeUrl;
 		board = "bcm2712";
 		kernelVersion = "v6_6_54";
@@ -117,6 +117,7 @@
 					kernel-version = kernelVersion;
 					uboot.enable = false;
 					firmware-migration-service.enable = true;
+					firmware-partition-label = "FIRMWARE";
 				};
 				hardware.raspberry-pi.config-output = configFile;
 			};
