@@ -5,7 +5,8 @@
 		enable = true;
 		flake = "/etc/nixos#${name}";
 		operation = "boot";
-		flags = [ "--update-input" "nixpkgs" ];
+		# assuming shell command substitution to run flake update before nixos-rebuild
+		flags = [ "$(nix flake update --flake /etc/nixos nixpkgs)" ];
 	};
 	nix = {
 		channel.enable = false;
@@ -18,11 +19,13 @@
 	environment.shellAliases = {
 		rebuild = "_rebuild() { " +
 			"if test \"$1\" = --update -o \"$1\" = -u ; then " +
-				"local update='--update-input nixpkgs' ; shift ; " +
+				"sudo nix flake update " +
+					"--flake /etc/nixos " +
+					"nixpkgs ; " +
+				"shift ; " +
 			"fi ; " +
 			"sudo nixos-rebuild " +
-				"--flake /etc/nixos#${name} " +
-				"$update " +
+				"--flake ${config.system.autoUpgrade.flake} " +
 				"$(test $# -gt 0 || echo switch) " +
 				"\"$@\" ; " +
 		"} ; _rebuild";

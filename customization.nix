@@ -8,14 +8,14 @@
 		description = "WiFi network SSID";
 	};
 	options.customization.wifi.password = lib.mkOption {
-		type = lib.types.str;
+		type = lib.types.nullOr lib.types.str;
 		description = "WiFi network password (pre-shared secret)";
 	};
 
 	config.customization = {
 		authorizedKey = "ssh-ed25519 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 		wifi.ssid = "";
-		wifi.password = "";
+		wifi.password = null;
 	};
 
 	config = {
