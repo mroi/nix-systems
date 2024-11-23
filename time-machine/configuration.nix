@@ -110,7 +110,7 @@
 				if test "$currBoot" = "$nextBoot" ; then
 					/nix/var/nix/profiles/system/bin/switch-to-configuration switch
 				else
-					systemctl start raspberry-pi-firmware-update.service && reboot
+					/nix/var/nix/profiles/system/bin/migrate-rpi-firmware && reboot
 				fi
 			fi
 		'';

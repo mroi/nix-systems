@@ -106,22 +106,27 @@
 			'';
 		};
 
-		# kernel and firmware upgrade service
-		systemd.services.raspberry-pi-firmware-update = (import "${flake}/rpi/default.nix" {
-			pinned = null; core-overlay = null; libcamera-overlay = null;
-		} {
-			inherit lib pkgs;
-			config = config // {
-				raspberry-pi-nix = {
-					inherit board;
-					kernel-version = kernelVersion;
-					uboot.enable = false;
-					firmware-migration-service.enable = true;
-					firmware-partition-label = "FIRMWARE";
+		# kernel and firmware migration script
+		system.extraSystemBuilderCmds = let
+			migrate-rpi-firmware = (import "${flake}/rpi/default.nix" {
+				pinned = null; core-overlay = null; libcamera-overlay = null;
+			} {
+				inherit lib pkgs;
+				config = config // {
+					raspberry-pi-nix = {
+						inherit board;
+						kernel-version = kernelVersion;
+						uboot.enable = false;
+						firmware-migration-service.enable = true;
+						firmware-partition-label = "FIRMWARE";
+					};
+					hardware.raspberry-pi.config-output = configFile;
 				};
-				hardware.raspberry-pi.config-output = configFile;
-			};
-		}).config.systemd.services.raspberry-pi-firmware-migrate;
+			}).config.systemd.services.raspberry-pi-firmware-migrate.serviceConfig.ExecStart;
+		in ''
+			mkdir -p $out/bin
+			cp ${migrate-rpi-firmware} $out/bin/migrate-rpi-firmware
+		'';
 
 		# configure boot device order
 		systemd.services.raspberry-pi-boot-order = {
