@@ -21,7 +21,6 @@
 	# NVMe storage for backups
 	fileSystems."/mnt/tm" = {
 		autoFormat = true;
-		label = "time-machine";
 		device = "/dev/nvme0n1";
 		fsType = "ext4";
 	};
