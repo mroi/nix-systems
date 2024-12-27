@@ -54,13 +54,14 @@
 	in {
 
 		# keep firmware uncompressed for the Raspberry boot process
-		nixpkgs.overlays = [ (prev: final: {
+		nixpkgs.overlays = [ (final: prev: {
 			raspberrypifw = flake.packages.aarch64-linux.firmware.overrideAttrs {
 				compressFirmware = false;
 			};
 			raspberrypiWirelessFirmware = flake.packages.aarch64-linux.wireless-firmware.overrideAttrs {
 				compressFirmware = false;
 			};
+			makeModulesClosure = x: prev.makeModulesClosure (x // { allowMissing = true; });
 		})];
 
 		# boot process and kernel
