@@ -18,7 +18,7 @@
 	};
 	environment.shellAliases = {
 		rebuild = "_rebuild() { " +
-			"if test \"$1\" = --update -o \"$1\" = -u ; then " +
+			"if test \"$1\" = update -o \"$1\" = all ; then " +
 				"sudo nix flake update " +
 					"--flake /etc/nixos " +
 					"nixpkgs ; " +
