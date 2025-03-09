@@ -14,6 +14,10 @@
 	services.journald.extraConfig = "Storage=volatile";
 	services.fstrim.enable = true;
 
+	# reduce closure size: do not keep Nixpkgs source tree or build dependencies
+	nix.registry = lib.mkForce {};
+	nix.settings.keep-derivations = false;
+
 	# reduce closure size: disable base CLI tools, ZFS
 	disabledModules = [ "${modulesPath}/profiles/base.nix" ];
 	boot.supportedFilesystems = { zfs = lib.mkForce false; };
