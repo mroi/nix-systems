@@ -1,27 +1,30 @@
 { lib, ... }: {
-	options.customization.authorizedKey = lib.mkOption {
-		type = lib.types.str;
-		description = "SSH authorized key line for client login";
-	};
-	options.customization.wifi.ssid = lib.mkOption {
-		type = lib.types.str;
-		description = "WiFi network SSID";
-	};
-	options.customization.wifi.password = lib.mkOption {
-		type = lib.types.nullOr lib.types.str;
-		description = "WiFi network password (pre-shared secret)";
-	};
 
-	config.customization = {
-		authorizedKey = "ssh-ed25519 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-		wifi.ssid = "";
-		wifi.password = null;
+	options.customization = {
+		authorizedKey = lib.mkOption {
+			type = lib.types.str;
+			description = "SSH authorized key line for client login";
+		};
+		wifi.ssid = lib.mkOption {
+			type = lib.types.str;
+			description = "WiFi network SSID";
+		};
+		wifi.password = lib.mkOption {
+			type = lib.types.nullOr lib.types.str;
+			description = "WiFi network password (pre-shared secret)";
+		};
 	};
 
 	config = {
 		# basic system settings
 		console.keyMap = "de";
 		time.timeZone = "Europe/Berlin";
+
+		customization = {
+			authorizedKey = "ssh-ed25519 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+			wifi.ssid = "";
+			wifi.password = null;
+		};
 
 		# command line environment
 		nix = {

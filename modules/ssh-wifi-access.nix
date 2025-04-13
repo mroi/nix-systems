@@ -1,5 +1,8 @@
 { config, lib, ... }: {
 
+	warnings = lib.optional (config.customization.wifi.password == null)
+		"WiFi password should be configured";
+
 	# configure basic network services
 	networking.wireless = {
 		enable = true;
