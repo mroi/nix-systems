@@ -6,10 +6,8 @@ let
 			./configuration.nix
 			../modules/config-install.nix
 		];
-		sdImage = {
-			imageBaseName = builtins.baseNameOf ./.;
-			compressImage = false;
-		};
+		image.baseName = builtins.baseNameOf ./.;
+		sdImage.compressImage = false;
 	};
 
 	nixos = lib.nixosSystem {

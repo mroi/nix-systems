@@ -5,7 +5,7 @@
 		"${modulesPath}/profiles/base.nix"
 		../customization.nix
 	];
-	system.stateVersion = "24.05";
+	system.stateVersion = "24.11";
 
 	networking.useDHCP = false;
 

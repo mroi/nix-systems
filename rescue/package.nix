@@ -5,8 +5,8 @@ let
 		imports = [
 			./configuration.nix
 		];
+		image.baseName = lib.mkForce (builtins.baseNameOf ./.);
 		isoImage = {
-			isoBaseName = builtins.baseNameOf ./.;
 			makeEfiBootable = true;
 			makeUsbBootable = true;
 			prependToMenuLabel = "Rescue ";
