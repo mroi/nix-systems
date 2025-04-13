@@ -16,6 +16,14 @@
 		gc.automatic = true;
 		gc.options = "--delete-older-than 100d";
 	};
+	systemd.services.nixos-upgrade.serviceConfig = {
+		CPUSchedulingPolicy = "idle";
+		IOSchedulingClass = "idle";
+	};
+	systemd.services.nix-gc.serviceConfig = {
+		CPUSchedulingPolicy = "idle";
+		IOSchedulingClass = "idle";
+	};
 	environment.shellAliases = {
 		rebuild = "_rebuild() { " +
 			"if test \"$1\" = update -o \"$1\" = all ; then " +
