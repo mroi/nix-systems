@@ -42,6 +42,7 @@
 				in {
 					type = "app";
 					program = "${nixos.config.system.build.vm}/bin/run-${nixos.config.networking.hostName}-vm";
+					meta.description = "QEMU VM of ${subdir} for testing";
 				}
 			) // {
 				ssh = {
@@ -49,6 +50,7 @@
 					program = "${nixpkgs.legacyPackages.${system}.writeScript "ssh-nixos" ''
 						ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i ~/.ssh/nixos -p 22022 root@localhost
 					''}";
+					meta.description = "SSH client connecting to a test VM";
 				};
 			}
 		);
