@@ -17,11 +17,12 @@
 	config = let
 
 		# Current uboot does not reliably boot the Raspberry Pi 5. Until this changes,
-		# the official Raspberry boot process with their modified kernel is used.
-		# https://github.com/nix-community/raspberry-pi-nix
+		# the official Raspberry boot process is used, booting to the vendor kernel.
+		# https://wiki.nixos.org/wiki/NixOS_on_ARM/Raspberry_Pi_5
+		# https://github.com/nvmd/nixos-raspberrypi
 
-		flakeUrl = "github:nix-community/raspberry-pi-nix/3bfda6add79c55f9bf143fac928f54484d450e87";
-		flake = builtins.getFlake flakeUrl;
+		# FIXME: previous flake I used is now unmaintained, migrate to new flake
+		oldFlake = builtins.getFlake "github:nix-community/raspberry-pi-nix/3bfda6add79c55f9bf143fac928f54484d450e87";
 		board = "bcm2712";
 		kernelVersion = "v6_6_51";
 		kernel = flake.packages.aarch64-linux."linux-${kernelVersion}-${board}";
@@ -55,10 +56,10 @@
 
 		# keep firmware uncompressed for the Raspberry boot process
 		nixpkgs.overlays = [ (final: prev: {
-			raspberrypifw = flake.packages.aarch64-linux.firmware.overrideAttrs {
+			raspberrypifw = oldFlake.packages.aarch64-linux.firmware.overrideAttrs {
 				compressFirmware = false;
 			};
-			raspberrypiWirelessFirmware = flake.packages.aarch64-linux.wireless-firmware.overrideAttrs {
+			raspberrypiWirelessFirmware = oldFlake.packages.aarch64-linux.wireless-firmware.overrideAttrs {
 				compressFirmware = false;
 			};
 			makeModulesClosure = x: prev.makeModulesClosure (x // { allowMissing = true; });
@@ -94,6 +95,7 @@
 		fileSystems."/boot/firmware".options = lib.mkForce [ "defaults" ];  # mount this partition
 		sdImage = {
 			firmwareSize = 128;
+			# FIXME: replace with populate commands from flake
 			populateFirmwareCommands = ''
 				cp ${kernel}/Image firmware/kernel.img
 				cp ${kernelParamsFile} firmware/cmdline.txt
@@ -108,7 +110,8 @@
 
 		# kernel and firmware migration script
 		system.extraSystemBuilderCmds = let
-			migrate-rpi-firmware = (import "${flake}/rpi/default.nix" {
+			# FIXME: replace with populate commands from flake
+			migrate-rpi-firmware = (import "${oldFlake}/rpi/default.nix" {
 				pinned = null; core-overlay = null; libcamera-overlay = null;
 			} {
 				inherit lib pkgs;
@@ -134,7 +137,7 @@
 			wantedBy = [ "multi-user.target" ];
 			wants = [ "local-fs.target" ];
 			after = [ "local-fs.target" ];
-			serviceConfig = { Type = "oneshot"; };
+			serviceConfig.Type = "oneshot";
 			script = let
 				bootMap = { sd-card = "1"; usb = "4"; nvme = "6"; };
 				bootOrder = lib.pipe config.hardware.raspberry-pi.bootOrder [
