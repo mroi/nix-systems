@@ -92,6 +92,7 @@
 		wantedBy = [ "multi-user.target" ];
 		wants = [ "local-fs.target" ];
 		after = [ "local-fs.target" ];
+		serviceConfig.KillMode = "none";
 		path = [ config.services.samba.package config.systemd.package ];
 		startAt = "06:00";
 		script = ''
