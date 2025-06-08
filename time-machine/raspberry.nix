@@ -25,8 +25,8 @@
 		board = "bcm2712";
 		kernelVersion = "v6_6_51";
 		kernel = flake.packages.aarch64-linux."linux-${kernelVersion}-${board}";
-		kernelParams = pkgs.writeText "cmdline.txt" "${lib.concatStringsSep " " config.boot.kernelParams}";
-		configFile = pkgs.runCommand "config.txt" {} (''
+		kernelParamsFile = pkgs.writeText "cmdline.txt" "${lib.concatStringsSep " " config.boot.kernelParams}";
+		bootConfigFile = pkgs.runCommand "config.txt" {} (''
 			cat <<- EOF > $out
 				# This is a generated file. Do not edit!
 				[all]
@@ -96,9 +96,9 @@
 			firmwareSize = 128;
 			populateFirmwareCommands = ''
 				cp ${kernel}/Image firmware/kernel.img
-				cp ${kernelParams} firmware/cmdline.txt
+				cp ${kernelParamsFile} firmware/cmdline.txt
 				cp -r ${pkgs.raspberrypifw}/share/raspberrypi/boot/{start*.elf,*.dtb,bootcode.bin,fixup*.dat,overlays} firmware/
-				cp ${configFile} firmware/config.txt
+				cp ${bootConfigFile} firmware/config.txt
 			'';
 			populateRootCommands = ''
 				mkdir -p files/sbin
@@ -120,7 +120,7 @@
 						firmware-migration-service.enable = true;
 						firmware-partition-label = "FIRMWARE";
 					};
-					hardware.raspberry-pi.config-output = configFile;
+					hardware.raspberry-pi.config-output = bootConfigFile;
 				};
 			}).config.systemd.services.raspberry-pi-firmware-migrate.serviceConfig.ExecStart;
 		in ''
