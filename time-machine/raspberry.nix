@@ -25,7 +25,11 @@
 		oldFlake = builtins.getFlake "github:nix-community/raspberry-pi-nix/3bfda6add79c55f9bf143fac928f54484d450e87";
 		board = "bcm2712";
 		kernelVersion = "v6_6_51";
-		kernel = flake.packages.aarch64-linux."linux-${kernelVersion}-${board}";
+
+		flakeUrl = "github:nvmd/nixos-raspberrypi/4de3b249951c15f42c706a7fac7d6e2ff12dfdea";
+		flake = builtins.getFlake flakeUrl;
+		raspberryPkgs = flake.legacyPackages.aarch64-linux.linuxAndFirmware."${kernelVersion}";
+
 		kernelParamsFile = pkgs.writeText "cmdline.txt" "${lib.concatStringsSep " " config.boot.kernelParams}";
 		bootConfigFile = pkgs.runCommand "config.txt" {} (''
 			cat <<- EOF > $out
@@ -73,7 +77,7 @@
 				initScript.enable = true;
 			};
 			consoleLogLevel = 7;
-			kernelPackages = pkgs.linuxPackagesFor kernel;
+			kernelPackages = pkgs.linuxPackagesFor raspberryPkgs.linux_rpi5;
 			kernelParams = [
 				"console=tty1"
 				"root=PARTUUID=${lib.strings.removePrefix "0x" config.sdImage.firmwarePartitionID}-02"
@@ -97,7 +101,7 @@
 			firmwareSize = 128;
 			# FIXME: replace with populate commands from flake
 			populateFirmwareCommands = ''
-				cp ${kernel}/Image firmware/kernel.img
+				cp ${raspberryPkgs.linux_rpi5}/Image firmware/kernel.img
 				cp ${kernelParamsFile} firmware/cmdline.txt
 				cp -r ${pkgs.raspberrypifw}/share/raspberrypi/boot/{start*.elf,*.dtb,bootcode.bin,fixup*.dat,overlays} firmware/
 				cp ${bootConfigFile} firmware/config.txt
