@@ -8,7 +8,7 @@
 		../customization.nix
 	];
 	system.stateVersion = "25.05";
-	nixpkgs.hostPlatform = "aarch64-linux";
+	nixpkgs.system = "aarch64-linux";
 
 	# FIXME: SSH crashes with the Rust nscd implementation
 	services.nscd.enableNsncd = false;
