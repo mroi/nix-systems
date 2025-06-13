@@ -58,6 +58,11 @@
 
 	in {
 
+		# keep the flake in the Nix store so it is not re-downloaded for auto-update
+		system.extraDependencies = let
+			recursiveInputs = x: [ x ] ++ map recursiveInputs (lib.attrValues x.inputs or {});
+		in lib.unique (lib.flatten (recursiveInputs flake));
+
 		# keep firmware uncompressed for the Raspberry boot process
 		nixpkgs.overlays = [ (final: prev: {
 			raspberrypifw = oldFlake.packages.aarch64-linux.firmware.overrideAttrs {
