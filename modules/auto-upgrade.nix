@@ -15,6 +15,7 @@
 		settings.fsync-store-paths = true;
 		gc.automatic = true;
 		gc.options = "--delete-older-than 100d";
+		gc.dates = "Tue 3:00";
 	};
 	systemd.services.nixos-upgrade.serviceConfig = {
 		CPUSchedulingPolicy = "idle";
