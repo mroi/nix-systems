@@ -30,7 +30,6 @@
 		flake = builtins.getFlake flakeUrl;
 		raspberryPkgs = flake.legacyPackages.aarch64-linux.linuxAndFirmware."${kernelVersion}";
 
-		kernelParamsFile = pkgs.writeText "cmdline.txt" "${lib.concatStringsSep " " config.boot.kernelParams}";
 		bootConfigFile = pkgs.runCommand "config.txt" {} (''
 			cat <<- EOF > $out
 				# This is a generated file. Do not edit!
@@ -55,6 +54,33 @@
 				arm_boost=1
 			EOF
 		'');
+		updateFirmware = firwareDirectory: toplevel: ''
+			declare -a rename=()
+			safeCopy() {
+				if ! test -e "$2" || ! ${pkgs.diffutils}/bin/cmp -s "$1" "$2" ; then
+					${pkgs.coreutils}/bin/cp "$1" "$2.tmp"
+					rename+=("$2")
+				fi
+			}
+
+			safeCopy ${bootConfigFile} ${firwareDirectory}/config.txt
+			for i in ${raspberryPkgs.raspberrypifw}/share/raspberrypi/boot/{start*.elf,*.dtb,bootcode.bin,fixup*.dat} ; do
+				safeCopy "$i" "${firwareDirectory}/''${i##*/}"
+			done
+			${pkgs.coreutils}/bin/mkdir -p ${firwareDirectory}/overlays
+			for i in ${raspberryPkgs.raspberrypifw}/share/raspberrypi/boot/overlays/* ; do
+				safeCopy "$i" "${firwareDirectory}/overlays/''${i##*/}"
+			done
+
+			safeCopy ${raspberryPkgs.linux_rpi5}/Image ${firwareDirectory}/kernel.img
+			echo "${lib.concatStringsSep " " config.boot.kernelParams} init=${toplevel}/init" > ${firwareDirectory}/cmdline.txt.tmp
+			rename+=("${firwareDirectory}/cmdline.txt")
+
+			# move all files in place
+			for i in "''${rename[@]}" ; do
+				${pkgs.coreutils}/bin/mv "$i.tmp" "$i"
+			done
+		'';
 
 	in {
 
@@ -73,10 +99,7 @@
 		# boot process and kernel
 		hardware.enableRedistributableFirmware = true;
 		boot = {
-			loader = {
-				grub.enable = false;
-				initScript.enable = true;
-			};
+			loader.grub.enable = false;
 			consoleLogLevel = 7;
 			kernelPackages = pkgs.linuxPackagesFor raspberryPkgs.linux_rpi5;
 			kernelParams = [
@@ -85,7 +108,6 @@
 				"rootfstype=ext4"
 				"fsck.repair=yes"
 				"rootwait"
-				"init=/sbin/init"
 			];
 			initrd.availableKernelModules = [
 				"usbhid"
@@ -100,41 +122,12 @@
 		fileSystems."/boot/firmware".options = lib.mkForce [ "defaults" ];  # mount this partition
 		sdImage = {
 			firmwareSize = 128;
-			# FIXME: replace with populate commands from flake
-			populateFirmwareCommands = ''
-				cp ${raspberryPkgs.linux_rpi5}/Image firmware/kernel.img
-				cp ${kernelParamsFile} firmware/cmdline.txt
-				cp -r ${pkgs.raspberrypifw}/share/raspberrypi/boot/{start*.elf,*.dtb,bootcode.bin,fixup*.dat,overlays} firmware/
-				cp ${bootConfigFile} firmware/config.txt
-			'';
-			populateRootCommands = ''
-				mkdir -p files/sbin
-				ln -s ${config.system.build.toplevel}/init files/sbin/
-			'';
+			populateFirmwareCommands = updateFirmware "firmware" config.system.build.toplevel;
+			populateRootCommands = "";
 		};
 
-		# kernel and firmware migration script
-		system.extraSystemBuilderCmds = let
-			# FIXME: replace with populate commands from flake
-			migrate-rpi-firmware = (import "${oldFlake}/rpi/default.nix" {
-				pinned = null; core-overlay = null; libcamera-overlay = null;
-			} {
-				inherit lib pkgs;
-				config = config // {
-					raspberry-pi-nix = {
-						inherit board;
-						kernel-version = kernelVersion;
-						uboot.enable = false;
-						firmware-migration-service.enable = true;
-						firmware-partition-label = "FIRMWARE";
-					};
-					hardware.raspberry-pi.config-output = bootConfigFile;
-				};
-			}).config.systemd.services.raspberry-pi-firmware-migrate.serviceConfig.ExecStart;
-		in ''
-			mkdir -p $out/bin
-			cp ${migrate-rpi-firmware} $out/bin/migrate-rpi-firmware
-		'';
+		# kernel and firmware update script
+		system.build.installBootLoader = pkgs.writeShellScript "update-firmware" (updateFirmware "/boot/firmware" "$1");
 
 		# configure boot device order
 		systemd.services.raspberry-pi-boot-order = {
