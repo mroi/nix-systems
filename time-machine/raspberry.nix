@@ -21,14 +21,9 @@
 		# https://wiki.nixos.org/wiki/NixOS_on_ARM/Raspberry_Pi_5
 		# https://github.com/nvmd/nixos-raspberrypi
 
-		# FIXME: previous flake I used is now unmaintained, migrate to new flake
-		oldFlake = builtins.getFlake "github:nix-community/raspberry-pi-nix/3bfda6add79c55f9bf143fac928f54484d450e87";
-		board = "bcm2712";
-		kernelVersion = "v6_6_51";
-
 		flakeUrl = "github:nvmd/nixos-raspberrypi/4de3b249951c15f42c706a7fac7d6e2ff12dfdea";
 		flake = builtins.getFlake flakeUrl;
-		raspberryPkgs = flake.legacyPackages.aarch64-linux.linuxAndFirmware."${kernelVersion}";
+		raspberryPkgs = flake.legacyPackages.aarch64-linux.linuxAndFirmware.v6_6_51;
 
 		bootConfigFile = pkgs.runCommand "config.txt" {} (''
 			cat <<- EOF > $out
