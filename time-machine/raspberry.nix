@@ -17,16 +17,15 @@
 	config = let
 
 		# Current uboot does not reliably boot the Raspberry Pi 5. Until this changes,
-		# the official Raspberry boot process with their modified kernel is used.
-		# https://github.com/nix-community/raspberry-pi-nix
+		# the official Raspberry boot process is used, booting to the vendor kernel.
+		# https://wiki.nixos.org/wiki/NixOS_on_ARM/Raspberry_Pi_5
+		# https://github.com/nvmd/nixos-raspberrypi
 
-		flakeUrl = "github:nix-community/raspberry-pi-nix/3bfda6add79c55f9bf143fac928f54484d450e87";
+		flakeUrl = "github:nvmd/nixos-raspberrypi/27518152d10345308bc5340fd64c8d3ad5c88c92";
 		flake = builtins.getFlake flakeUrl;
-		board = "bcm2712";
-		kernelVersion = "v6_6_51";
-		kernel = flake.packages.aarch64-linux."linux-${kernelVersion}-${board}";
-		kernelParams = pkgs.writeText "cmdline.txt" "${lib.concatStringsSep " " config.boot.kernelParams}";
-		configFile = pkgs.runCommand "config.txt" {} (''
+		raspberryPkgs = flake.legacyPackages.aarch64-linux.linuxAndFirmware.v6_6_51;
+
+		bootConfigFile = pkgs.runCommand "config.txt" {} (''
 			cat <<- EOF > $out
 				# This is a generated file. Do not edit!
 				[all]
@@ -50,36 +49,60 @@
 				arm_boost=1
 			EOF
 		'');
+		updateFirmware = firwareDirectory: toplevel: ''
+			declare -a rename=()
+			safeCopy() {
+				if ! test -e "$2" || ! ${pkgs.diffutils}/bin/cmp -s "$1" "$2" ; then
+					${pkgs.coreutils}/bin/cp "$1" "$2.tmp"
+					rename+=("$2")
+				fi
+			}
+
+			safeCopy ${bootConfigFile} ${firwareDirectory}/config.txt
+			for i in ${raspberryPkgs.raspberrypifw}/share/raspberrypi/boot/{start*.elf,*.dtb,bootcode.bin,fixup*.dat} ; do
+				safeCopy "$i" "${firwareDirectory}/''${i##*/}"
+			done
+			${pkgs.coreutils}/bin/mkdir -p ${firwareDirectory}/overlays
+			for i in ${raspberryPkgs.raspberrypifw}/share/raspberrypi/boot/overlays/* ; do
+				safeCopy "$i" "${firwareDirectory}/overlays/''${i##*/}"
+			done
+
+			safeCopy ${raspberryPkgs.linux_rpi5}/Image ${firwareDirectory}/kernel.img
+			echo "${lib.concatStringsSep " " config.boot.kernelParams} init=${toplevel}/init" > ${firwareDirectory}/cmdline.txt.tmp
+			rename+=("${firwareDirectory}/cmdline.txt")
+
+			# move all files in place
+			for i in "''${rename[@]}" ; do
+				${pkgs.coreutils}/bin/mv "$i.tmp" "$i"
+			done
+		'';
 
 	in {
 
-		# keep firmware uncompressed for the Raspberry boot process
+		# keep the flake in the Nix store so it is not re-downloaded for auto-update
+		system.extraDependencies = let
+			recursiveInputs = x: [ x ] ++ map recursiveInputs (lib.attrValues x.inputs or {});
+		in lib.unique (lib.flatten (recursiveInputs flake));
+
+		# vendor firmware
 		nixpkgs.overlays = [ (final: prev: {
-			raspberrypifw = flake.packages.aarch64-linux.firmware.overrideAttrs {
-				compressFirmware = false;
-			};
-			raspberrypiWirelessFirmware = flake.packages.aarch64-linux.wireless-firmware.overrideAttrs {
-				compressFirmware = false;
-			};
+			raspberrypifw = raspberryPkgs.raspberrypifw;
+			raspberrypiWirelessFirmware = raspberryPkgs.raspberrypiWirelessFirmware;
 			makeModulesClosure = x: prev.makeModulesClosure (x // { allowMissing = true; });
 		})];
 
 		# boot process and kernel
 		hardware.enableRedistributableFirmware = true;
 		boot = {
-			loader = {
-				grub.enable = false;
-				initScript.enable = true;
-			};
+			loader.grub.enable = false;
 			consoleLogLevel = 7;
-			kernelPackages = pkgs.linuxPackagesFor kernel;
+			kernelPackages = pkgs.linuxPackagesFor raspberryPkgs.linux_rpi5;
 			kernelParams = [
 				"console=tty1"
 				"root=PARTUUID=${lib.strings.removePrefix "0x" config.sdImage.firmwarePartitionID}-02"
 				"rootfstype=ext4"
 				"fsck.repair=yes"
 				"rootwait"
-				"init=/sbin/init"
 			];
 			initrd.availableKernelModules = [
 				"usbhid"
@@ -94,39 +117,12 @@
 		fileSystems."/boot/firmware".options = lib.mkForce [ "defaults" ];  # mount this partition
 		sdImage = {
 			firmwareSize = 128;
-			populateFirmwareCommands = ''
-				cp ${kernel}/Image firmware/kernel.img
-				cp ${kernelParams} firmware/cmdline.txt
-				cp -r ${pkgs.raspberrypifw}/share/raspberrypi/boot/{start*.elf,*.dtb,bootcode.bin,fixup*.dat,overlays} firmware/
-				cp ${configFile} firmware/config.txt
-			'';
-			populateRootCommands = ''
-				mkdir -p files/sbin
-				ln -s ${config.system.build.toplevel}/init files/sbin/
-			'';
+			populateFirmwareCommands = updateFirmware "firmware" config.system.build.toplevel;
+			populateRootCommands = "";
 		};
 
-		# kernel and firmware migration script
-		system.extraSystemBuilderCmds = let
-			migrate-rpi-firmware = (import "${flake}/rpi/default.nix" {
-				pinned = null; core-overlay = null; libcamera-overlay = null;
-			} {
-				inherit lib pkgs;
-				config = config // {
-					raspberry-pi-nix = {
-						inherit board;
-						kernel-version = kernelVersion;
-						uboot.enable = false;
-						firmware-migration-service.enable = true;
-						firmware-partition-label = "FIRMWARE";
-					};
-					hardware.raspberry-pi.config-output = configFile;
-				};
-			}).config.systemd.services.raspberry-pi-firmware-migrate.serviceConfig.ExecStart;
-		in ''
-			mkdir -p $out/bin
-			cp ${migrate-rpi-firmware} $out/bin/migrate-rpi-firmware
-		'';
+		# kernel and firmware update script
+		system.build.installBootLoader = pkgs.writeShellScript "update-firmware" (updateFirmware "/boot/firmware" "$1");
 
 		# configure boot device order
 		systemd.services.raspberry-pi-boot-order = {
@@ -134,7 +130,7 @@
 			wantedBy = [ "multi-user.target" ];
 			wants = [ "local-fs.target" ];
 			after = [ "local-fs.target" ];
-			serviceConfig = { Type = "oneshot"; };
+			serviceConfig.Type = "oneshot";
 			script = let
 				bootMap = { sd-card = "1"; usb = "4"; nvme = "6"; };
 				bootOrder = lib.pipe config.hardware.raspberry-pi.bootOrder [

@@ -110,7 +110,7 @@
 				if test "$currBoot" = "$nextBoot" ; then
 					/nix/var/nix/profiles/system/bin/switch-to-configuration switch
 				else
-					/nix/var/nix/profiles/system/bin/migrate-rpi-firmware && reboot
+					/nix/var/nix/profiles/system/bin/switch-to-configuration boot && reboot
 				fi
 			fi
 		'';
