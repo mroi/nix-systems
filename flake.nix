@@ -3,7 +3,7 @@
 	inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 	outputs = { self, nixpkgs }: let
 		systems = [ "aarch64-darwin" "aarch64-linux" "x86_64-linux"  "x86_64-darwin" ];
-		subdirs = [ "print-server" "rescue" "time-machine" ];
+		subdirs = [ "print-server" "rescue" "time-machine" "vmware-host" ];
 		modules = [ "auto-upgrade" "config-install" "conserve-storage" "ssh-wifi-access" "stress-test-tools" ];
 		forAll = list: f: nixpkgs.lib.genAttrs list f;
 		callPackage = system: nixpkgs.lib.callPackageWith (nixpkgs.legacyPackages.${system} // {
