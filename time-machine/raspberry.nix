@@ -21,7 +21,7 @@
 		# https://wiki.nixos.org/wiki/NixOS_on_ARM/Raspberry_Pi_5
 		# https://github.com/nvmd/nixos-raspberrypi
 
-		flakeUrl = "github:nvmd/nixos-raspberrypi/27518152d10345308bc5340fd64c8d3ad5c88c92";
+		flakeUrl = "github:nvmd/nixos-raspberrypi/09c214a30e5a27e0fa92a9975b91c82ba05d1f17";
 		flake = builtins.getFlake flakeUrl;
 		raspberryPkgs = flake.legacyPackages.aarch64-linux.linuxAndFirmware.v6_6_51;
 
