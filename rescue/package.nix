@@ -1,4 +1,4 @@
-{ lib, system }:
+{ lib, stdenv }:
 
 let
 	configuration = {
@@ -15,7 +15,7 @@ let
 	};
 
 	nixos = lib.nixosSystem {
-		system = builtins.replaceStrings [ "darwin" ] [ "linux" ] system;
+		system = builtins.replaceStrings [ "darwin" ] [ "linux" ] stdenv.hostPlatform.system;
 		modules = [ configuration ];
 	};
 
