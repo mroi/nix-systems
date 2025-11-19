@@ -50,6 +50,7 @@
 			EOF
 		'');
 		updateFirmware = firwareDirectory: toplevel: ''
+			set -e
 			declare -a rename=()
 			safeCopy() {
 				if ! test -e "$2" || ! ${pkgs.diffutils}/bin/cmp -s "$1" "$2" ; then
@@ -58,6 +59,7 @@
 				fi
 			}
 
+			# copy firmware files
 			safeCopy ${bootConfigFile} ${firwareDirectory}/config.txt
 			for i in ${raspberryPkgs.raspberrypifw}/share/raspberrypi/boot/{start*.elf,*.dtb,bootcode.bin,fixup*.dat} ; do
 				safeCopy "$i" "${firwareDirectory}/''${i##*/}"
@@ -67,7 +69,9 @@
 				safeCopy "$i" "${firwareDirectory}/overlays/''${i##*/}"
 			done
 
-			safeCopy ${raspberryPkgs.linux_rpi5}/Image ${firwareDirectory}/kernel.img
+			# copy kernel boot files
+			safeCopy ${config.system.build.kernel}/Image ${firwareDirectory}/kernel.img
+			safeCopy ${config.system.build.initialRamdisk}/initrd ${firwareDirectory}/initrd
 			echo "${lib.concatStringsSep " " config.boot.kernelParams} init=${toplevel}/init" > ${firwareDirectory}/cmdline.txt.tmp
 			rename+=("${firwareDirectory}/cmdline.txt")
 
