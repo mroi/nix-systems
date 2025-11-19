@@ -92,7 +92,6 @@
 		wantedBy = [ "multi-user.target" ];
 		wants = [ "local-fs.target" ];
 		after = [ "local-fs.target" ];
-		serviceConfig.KillMode = "none";
 		path = [ config.services.samba.package config.systemd.package ];
 		startAt = "06:00";
 		script = ''
@@ -108,7 +107,9 @@
 				currBoot=$(readlink /run/booted-system/{firmware,initrd,kernel,kernel-modules,systemd})
 				nextBoot=$(readlink /nix/var/nix/profiles/system/{firmware,initrd,kernel,kernel-modules,systemd})
 				if test "$currBoot" = "$nextBoot" ; then
-					/nix/var/nix/profiles/system/bin/switch-to-configuration switch
+					# switch configuration in a transient systemd unit, as this one may be stopped during switch
+					systemd-run --service-type=exec --collect \
+						/nix/var/nix/profiles/system/bin/switch-to-configuration switch
 				else
 					/nix/var/nix/profiles/system/bin/switch-to-configuration boot && reboot
 				fi
