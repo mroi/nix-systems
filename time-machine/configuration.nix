@@ -8,7 +8,7 @@
 		../customization.nix
 		./raspberry.nix
 	];
-	system.stateVersion = "25.05";
+	system.stateVersion = "25.11";
 	nixpkgs.system = "aarch64-linux";
 
 	# FIXME: boot from USB as a temporary fallback

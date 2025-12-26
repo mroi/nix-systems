@@ -7,7 +7,7 @@
 		../modules/ssh-wifi-access.nix
 		../customization.nix
 	];
-	system.stateVersion = "25.05";
+	system.stateVersion = "25.11";
 	nixpkgs.system = "aarch64-linux";
 
 	# FIXME: SSH crashes with the Rust nscd implementation
